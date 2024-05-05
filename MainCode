@@ -33,43 +33,36 @@
         <input type="number" id="walkwayLength" name="walkwayLength">
     </div>
 
-    <div>
-        <label for="presets">Select Preset:</label>
-        <select id="presets" onchange="setPreset()">
-            <option value="custom">Custom</option>
-            <option value="preset1">Preset 1</option>
-            <option value="preset2">Preset 2</option>
-            <option value="preset3">Preset 3</option>
-            <option value="preset4">Preset 4</option>
-        </select>
-    </div>
-
     <button type="button" onclick="calculateTime()">Calculate Time</button>
 </form>
 
 <p id="result"></p>
 
 <script>
-    function setPreset() {
-        var presets = {
-            preset1: { walkDistance: 500, escalatorDistance: 20, numSteps: 30, walkwayLength: 100 },
-            preset2: { walkDistance: 600, escalatorDistance: 25, numSteps: 35, walkwayLength: 120 },
-            preset3: { walkDistance: 700, escalatorDistance: 30, numSteps: 40, walkwayLength: 150 },
-            preset4: { walkDistance: 800, escalatorDistance: 35, numSteps: 45, walkwayLength: 180 }
-        };
-
-        var selectedPreset = document.getElementById('presets').value;
-        var presetValues = presets[selectedPreset];
-
-        document.getElementById('walkDistance').value = presetValues.walkDistance;
-        document.getElementById('escalatorDistance').value = presetValues.escalatorDistance;
-        document.getElementById('numSteps').value = presetValues.numSteps;
-        document.getElementById('walkwayLength').value = presetValues.walkwayLength;
-    }
-
     function calculateTime() {
-        // Calculation logic remains the same as before
-        // ...
+        // Get input values, default to 0 if empty
+        var walkDistance = parseFloat(document.getElementById('walkDistance').value) || 0;
+        var escalatorDistance = parseFloat(document.getElementById('escalatorDistance').value) || 0;
+        var numSteps = parseFloat(document.getElementById('numSteps').value) || 0;
+        var walkwayLength = parseFloat(document.getElementById('walkwayLength').value) || 0;
+
+        // Reference values
+        var walkingSpeed = 1.3; // m/s
+        var stairsSpeed = 1.9; // steps/s
+        var escalatorSpeed = 1.5; // steps/s
+        var walkwaySpeed = 0.5; // m/s
+
+        // Calculate time based on reference values
+        var walkingTime = walkDistance / walkingSpeed;
+        var stairsTime = numSteps / stairsSpeed;
+        var escalatorTime = escalatorDistance / escalatorSpeed;
+        var walkwayTime = walkwayLength / walkwaySpeed;
+
+        // Total time
+        var estimatedTime = walkingTime + stairsTime + escalatorTime + walkwayTime;
+
+        // Display the result
+        document.getElementById('result').innerText = "Your estimated time is: " + estimatedTime.toFixed(2) + " seconds";
     }
 </script>
 
