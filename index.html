@@ -4,12 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Time Estimation Calculator</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: white;
+            color: #333;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 {
+            color: #1a1a1a;
+        }
+        form {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 300px;
+            box-sizing: border-box;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input:hover, select:hover {
+            border-color: #88aaff;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007aff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+        button:hover {
+            background-color: #005ecb;
+        }
+        footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
 
 <h2>General model to estimate interchange time</h2>
 <p>
-    Model created to estimate the interchange time between metro lines. More information about the project <a href="https://wordpress.com/post/omtsprojects.wordpress.com/228">here:</a>
+    Model created to estimate the interchange time between metro lines. More information about the project <a href="https://wordpress.com/post/omtsprojects.wordpress.com/228">here</a>.
 </p>
 
 <form id="timeEstimationForm">
@@ -53,30 +107,29 @@
     function setPreset() {
         var presets = {
             empty: { walkDistance: "", escalatorDistance: "", numSteps: "", walkwayLength: "" },
-            sants_l3_to_l5: { walkDistance: randomInRange(5, 69), escalatorDistance: randomInRange(5, 69), numSteps: randomInRange(5, 69), walkwayLength: randomInRange(5, 69) },
-            sants_l5_to_l3: { walkDistance: randomInRange(5, 69), escalatorDistance: randomInRange(5, 69), numSteps: randomInRange(5, 69), walkwayLength: randomInRange(5, 69) },
-            diagonal_l3_to_l5: { walkDistance: randomInRange(5, 69), escalatorDistance: randomInRange(5, 69), numSteps: randomInRange(5, 69), walkwayLength: randomInRange(5, 69) },
-            diagonal_l5_to_l3: { walkDistance: randomInRange(5, 69), escalatorDistance: randomInRange(5, 69), numSteps: randomInRange(5, 69), walkwayLength: randomInRange(5, 69) }
+            sants_l3_to_l5: { walkDistance: 69, escalatorDistance: 69, numSteps: 69, walkwayLength: 69 },
+            sants_l5_to_l3: { walkDistance: 69, escalatorDistance: 69, numSteps: 69, walkwayLength: 69 },
+            diagonal_l3_to_l5: { walkDistance: 69, escalatorDistance: 69, numSteps: 69, walkwayLength: 69 },
+            diagonal_l5_to_l3: { walkDistance: 69, escalatorDistance: 69, numSteps: 69, walkwayLength: 69 }
         };
+    var selectedPreset = document.getElementById('presets').value;
+    var presetValues = presets[selectedPreset];
 
-        var selectedPreset = document.getElementById('presets').value;
-        var presetValues = presets[selectedPreset];
+    document.getElementById('walkDistance').value = presetValues.walkDistance;
+    document.getElementById('escalatorDistance').value = presetValues.escalatorDistance;
+    document.getElementById('numSteps').value = presetValues.numSteps;
+    document.getElementById('walkwayLength').
+    value = presetValues.walkwayLength;
+}
 
-        document.getElementById('walkDistance').value = presetValues.walkDistance;
-        document.getElementById('escalatorDistance').value = presetValues.escalatorDistance;
-        document.getElementById('numSteps').value = presetValues.numSteps;
-        document.getElementById('walkwayLength').value = presetValues.walkwayLength;
-    }
-
-    function calculateTime() {
-        // Calculation logic remains the same as before
-        // ...
-    }
-
-    function randomInRange(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+function calculateTime() {
+    // Placeholder for calculation logic
+    document.getElementById('result').textContent = "Time calculation would be displayed here.";
+}
 </script>
-
+<footer>
+    Learn more about this project <a href="https://wordpress.com/post/omtsprojects.wordpress.com/228">here</a>.
+</footer>
 </body>
 </html>
+```
