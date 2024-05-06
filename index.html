@@ -70,6 +70,12 @@
             color: transparent;
             display: inline-block;
         }
+        .dropdowns-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -101,19 +107,35 @@
     </div>
 
     <div>
-        <label for="presets">Select Preset:</label>
-        <select id="presets" onchange="setPreset()">
-            <option value="empty">Empty</option>
-            <option value="sants_l3_to_l5">Sants: L3 to L5</option>
-            <option value="sants_l5_to_l3">Sants: L5 to L3</option>
-            <option value="diagonal_l3_to_l5">Diagonal: L3 to L5</option>
-            <option value="diagonal_l5_to_l3">Diagonal: L5 to L3</option>
+        <label for="metroStation">Select Metro Station:</label>
+        <select id="metroStation" onchange="showDropdowns()">
+            <option value="custom">Custom Station</option>
+            <option value="sants">Sants Estació</option>
+            <option value="diagonal">Diagonal</option>
         </select>
     </div>
 
-<button type="button" onclick="calculateTime()" style="background: linear-gradient(to top right, rgba(0, 102, 34, 1), rgba(111, 204, 97, 1)); color: white; font-weight: bold; padding: 10px; border: none; border-radius: 4px; cursor: pointer; transition: background 0.3s;">
-    Calculate Time
-</button>
+    <div id="dropdownsContainer" class="dropdowns-container" style="display: none;">
+        <div>
+            <label for="startPlatform">Start Platform:</label>
+            <select id="startPlatform">
+                <!-- Options will be populated dynamically -->
+            </select>
+        </div>
+        <div>
+            <label for="destinationPlatform">Destination Platform:</label>
+            <select id="destinationPlatform">
+                <!-- Options will be populated dynamically -->
+            </select>
+        </div>
+        <button type="button" onclick="confirmSelection()" style="background: linear-gradient(to top right, rgba(0, 102, 34, 1), rgba(111, 204, 97, 1)); color: white; font-weight: bold; padding: 10px; border: none; border-radius: 4px; cursor: pointer; transition: background 0.3s;">
+            Confirm Selection
+        </button>
+    </div>
+
+    <button type="button" onclick="calculateTime()" style="background: linear-gradient(to top right, rgba(0, 102, 34, 1), rgba(111, 204, 97, 1)); color: white; font-weight: bold; padding: 10px; border: none; border-radius: 4px; cursor: pointer; transition: background 0.3s;">
+        Calculate Time
+    </button>
     
 </form>
 
@@ -123,20 +145,92 @@
 </div>
 
 <script>
-    function setPreset() {
-        var presets = {
-            empty: { walkDistance: "", escalatorDistance: "", numSteps: "", walkwayLength: "" },
-            sants_l3_to_l5: { walkDistance: 69, escalatorDistance: 69, numSteps: 69, walkwayLength: 69 },
-            sants_l5_to_l3: { walkDistance: 69, escalatorDistance: 69, numSteps: 69, walkwayLength: 69 },
-            diagonal_l3_to_l5: { walkDistance: 69, escalatorDistance: 69, numSteps: 69, walkwayLength: 69 },
-            diagonal_l5_to_l3: { walkDistance: 69, escalatorDistance: 69, numSteps: 69, walkwayLength: 69 }
+    const distances = {
+        diagonal: {
+            l3_trinitat: { l3_trinitat: 0, l3_zona: 157.89, l5_cornelia: 140.54, l5_hebron: 140.51 },
+            l3_zona: { l3_trinitat: 157.89, l3_zona: 0, l5_cornelia: 124.04, l5_hebron: 124.01 },
+            l5_cornelia: { l3_trinitat: 140.54, l3_zona: 124.04, l5_cornelia: 0, l5_hebron: 106.66 },
+            l5_hebron: { l3_trinitat: 140.51, l3_zona: 124.01, l5_cornelia: 106.66, l5_hebron: 0 }
+        },
+        sants: {
+            l3_trinitat: { l3_trinitat: 0, l3_zona: 123, l5_cornelia: 237.19, l5_hebron: 251.79 },
+            l3_zona: { l3_trinitat: 123, l3_zona: 0, l5_cornelia: 248.67, l5_hebron: 263.27 },
+            l5_cornelia: { l3_trinitat: 237.19, l3_zona: 248.67, l5_cornelia: 0, l5_hebron: 116.58 },
+            l5_hebron: { l3_trinitat: 251.79, l3_zona: 263.27, l5_cornelia: 116.58, l5_hebron: 0 }
+        }
+    };
+
+    const stairs = {
+        diagonal: {
+            l3_trinitat: { l3_trinitat: 0, l3_zona: 47, l5_cornelia: 58, l5_hebron: 46 },
+            l3_zona: { l3_trinitat: 47, l3_zona: 0, l5_cornelia: 59, l5_hebron: 47 },
+            l5_cornelia: { l3_trinitat: 58, l3_zona: 59, l5_cornelia: 0, l5_hebron: 70 },
+            l5_hebron: { l3_trinitat: 58, l3_zona: 59, l5_cornelia: 70, l5_hebron: 0 }
+        },
+        sants: {
+            l3_trinitat: { l3_trinitat: 0, l3_zona: 68, l5_cornelia: 34, l5_hebron: 88 },
+            l3_zona: { l3_trinitat: 68, l3_zona: 0, l5_cornelia: 34, l5_hebron: 88 },
+            l5_cornelia: { l3_trinitat: 34, l3_zona: 34, l5_cornelia: 0, l5_hebron: 54 },
+            l5_hebron: { l3_trinitat: 88, l3_zona: 88, l5_cornelia: 54, l5_hebron: 0 }
+        }
+    };
+
+    function populatePlatforms(station) {
+        var startPlatformSelect = document.getElementById('startPlatform');
+        var destinationPlatformSelect = document.getElementById('destinationPlatform');
+
+        startPlatformSelect.innerHTML = '';
+        destinationPlatformSelect.innerHTML = '';
+
+        var platforms = {
+            sants: ["L3 Trinitat", "L3 Zona", "L5 Cornelia", "L5 Hebron"],
+            diagonal: ["L3 Trinitat", "L3 Zona", "L5 Cornelia", "L5 Hebron"]
         };
-        var selectedPreset = document.getElementById('presets').value;
-        var presetValues = presets[selectedPreset];
+
+        platforms[station].forEach(function(platform) {
+            var option = document.createElement('option');
+            option.text = platform;
+            option.value = platform.toLowerCase().replace(/\s/g, '_');
+            startPlatformSelect.add(option);
+        });
+
+        platforms[station].forEach(function(platform) {
+            var option = document.createElement('option');
+            option.text = platform;
+            option.value = platform.toLowerCase().replace(/\s/g, '_');
+            destinationPlatformSelect.add(option);
+        });
+
+        updatePlatformInfo(); // Update once to set initial values
+    }
+
+    function showDropdowns() {
+        var station = document.getElementById('metroStation').value;
+        var dropdownsContainer = document.getElementById('dropdownsContainer');
+        
+        if (station === 'custom') {
+            dropdownsContainer.style.display = 'none';
+        } else {
+            dropdownsContainer.style.display = 'block';
+            populatePlatforms(station);
+        }
+    }
+
+    function confirmSelection() {
+        var station = document.getElementById('metroStation').value;
+        var startPlatform = document.getElementById('startPlatform').value;
+        var destinationPlatform = document.getElementById('destinationPlatform').value;
+
+        var presetValues = {
+            walkDistance: distances[station][startPlatform][destinationPlatform],
+            numSteps: stairs[station][startPlatform][destinationPlatform],
+            escalatorDistance: 0, // Preset to zero
+            walkwayLength: 0 // Preset to zero
+        };
 
         document.getElementById('walkDistance').value = presetValues.walkDistance;
-        document.getElementById('escalatorDistance').value = presetValues.escalatorDistance;
         document.getElementById('numSteps').value = presetValues.numSteps;
+        document.getElementById('escalatorDistance').value = presetValues.escalatorDistance;
         document.getElementById('walkwayLength').value = presetValues.walkwayLength;
     }
 
