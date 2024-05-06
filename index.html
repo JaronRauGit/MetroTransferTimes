@@ -88,22 +88,22 @@
 <form id="timeEstimationForm">
     <div>
         <label for="walkDistance">Walking Distance (meters):</label>
-        <input type="number" id="walkDistance" name="walkDistance">
+        <input type="number" id="walkDistance" name="walkDistance" placeholder="Total distance to walk">
     </div>
 
     <div>
         <label for="escalatorDistance">Escalator length (Steps):</label>
-        <input type="number" id="escalatorDistance" name="escalatorDistance">
+        <input type="number" id="escalatorDistance" name="escalatorDistance" placeholder="Based on stairs next to it">
     </div>
 
     <div>
         <label for="numSteps">Stairs length (Steps):</label>
-        <input type="number" id="numSteps" name="numSteps">
+        <input type="number" id="numSteps" name="numSteps" placeholder="Only if no escalator">
     </div>
 
     <div>
         <label for="walkwayLength">Moving Walkway Length (meters):</label>
-        <input type="number" id="walkwayLength" name="walkwayLength">
+        <input type="number" id="walkwayLength" name="walkwayLength" placeholder="Can't be in walking distance">
     </div>
 
     <div>
@@ -223,14 +223,14 @@
 
         var presetValues = {
             walkDistance: distances[station][startPlatform][destinationPlatform],
-            numSteps: stairs[station][startPlatform][destinationPlatform],
-            escalatorDistance: 0, // Preset to zero
+            escalatorDistance: stairs[station][startPlatform][destinationPlatform],
+            numSteps: 0, // Preset to zero
             walkwayLength: 0 // Preset to zero
         };
 
         document.getElementById('walkDistance').value = presetValues.walkDistance;
-        document.getElementById('numSteps').value = presetValues.numSteps;
         document.getElementById('escalatorDistance').value = presetValues.escalatorDistance;
+        document.getElementById('numSteps').value = presetValues.numSteps;
         document.getElementById('walkwayLength').value = presetValues.walkwayLength;
     }
 
