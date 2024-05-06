@@ -109,9 +109,10 @@
     <div>
         <label for="metroStation">Select Metro Station:</label>
         <select id="metroStation" onchange="showDropdowns()">
-            <option value="custom">Custom Station</option>
+            <option value="">Choose Station</option>
             <option value="sants">Sants Estació</option>
             <option value="diagonal">Diagonal</option>
+            <option value="custom">Custom Station</option>
         </select>
     </div>
 
@@ -144,6 +145,7 @@
     <p class="calculated-time" id="calculatedTime">0.00</p>
 </div>
 
+<script>
 const distances = {
     diagonal: {
         l3_trinitat: { l3_trinitat: 0, l3_zona: 157.89005, l5_cornelia: 190.0563, l5_hebron: 190.0263 },
@@ -156,6 +158,21 @@ const distances = {
         l3_zona: { l3_trinitat: 123, l3_zona: 0, l5_cornelia: 248.67, l5_hebron: 263.27 },
         l5_cornelia: { l3_trinitat: 237.19, l3_zona: 248.67, l5_cornelia: 0, l5_hebron: 116.58 },
         l5_hebron: { l3_trinitat: 251.79, l3_zona: 263.27, l5_cornelia: 116.58, l5_hebron: 0 }
+    }
+};
+
+const stairs = {
+    diagonal: {
+        l3_trinitat: { l3_trinitat: 0, l3_zona: 47, l5_cornelia: 58, l5_hebron: 46 },
+        l3_zona: { l3_trinitat: 47, l3_zona: 0, l5_cornelia: 59, l5_hebron: 47 },
+        l5_cornelia: { l3_trinitat: 58, l3_zona: 59, l5_cornelia: 0, l5_hebron: 70 },
+        l5_hebron: { l3_trinitat: 58, l3_zona: 59, l5_cornelia: 70, l5_hebron: 0 }
+    },
+    sants: {
+        l3_trinitat: { l3_trinitat: 0, l3_zona: 68, l5_cornelia: 34, l5_hebron: 88 },
+        l3_zona: { l3_trinitat: 68, l3_zona: 0, l5_cornelia: 34, l5_hebron: 88 },
+        l5_cornelia: { l3_trinitat: 34, l3_zona: 34, l5_cornelia: 0, l5_hebron: 54 },
+        l5_hebron: { l3_trinitat: 88, l3_zona: 88, l5_cornelia: 54, l5_hebron: 0 }
     }
 };
 
@@ -174,85 +191,86 @@ const walkwayLengths = {
     }
 };
 
-    function populatePlatforms(station) {
-        var startPlatformSelect = document.getElementById('startPlatform');
-        var destinationPlatformSelect = document.getElementById('destinationPlatform');
+function populatePlatforms(station) {
+    var startPlatformSelect = document.getElementById('startPlatform');
+    var destinationPlatformSelect = document.getElementById('destinationPlatform');
 
-        startPlatformSelect.innerHTML = '';
-        destinationPlatformSelect.innerHTML = '';
+    startPlatformSelect.innerHTML = '';
+    destinationPlatformSelect.innerHTML = '';
 
-        var platforms = {
-            sants: ["L3 Trinitat", "L3 Zona", "L5 Cornelia", "L5 Hebron"],
-            diagonal: ["L3 Trinitat", "L3 Zona", "L5 Cornelia", "L5 Hebron"]
-        };
+    var platforms = {
+        sants: ["L3 Trinitat", "L3 Zona", "L5 Cornelia", "L5 Hebron"],
+        diagonal: ["L3 Trinitat", "L3 Zona", "L5 Cornelia", "L5 Hebron"]
+    };
 
-        platforms[station].forEach(function(platform) {
-            var option = document.createElement('option');
-            option.text = platform;
-            option.value = platform.toLowerCase().replace(/\s/g, '_');
-            startPlatformSelect.add(option);
-        });
+    platforms[station].forEach(function(platform) {
+        var option = document.createElement('option');
+        option.text = platform;
+        option.value = platform.toLowerCase().replace(/\s/g, '_');
+        startPlatformSelect.add(option);
+    });
 
-        platforms[station].forEach(function(platform) {
-            var option = document.createElement('option');
-            option.text = platform;
-            option.value = platform.toLowerCase().replace(/\s/g, '_');
-            destinationPlatformSelect.add(option);
-        });
+    platforms[station].forEach(function(platform) {
+        var option = document.createElement('option');
+        option.text = platform;
+        option.value = platform.toLowerCase().replace(/\s/g, '_');
+        destinationPlatformSelect.add(option);
+    });
 
-        updatePlatformInfo(); // Update once to set initial values
+    updatePlatformInfo(); // Update once to set initial values
+}
+
+function showDropdowns() {
+    var station = document.getElementById('metroStation').value;
+    var dropdownsContainer = document.getElementById('dropdownsContainer');
+    
+    if (station === 'custom' || station === '') {
+        dropdownsContainer.style.display = 'none';
+    } else {
+        dropdownsContainer.style.display = 'block';
+        populatePlatforms(station);
     }
+}
 
-    function showDropdowns() {
-        var station = document.getElementById('metroStation').value;
-        var dropdownsContainer = document.getElementById('dropdownsContainer');
-        
-        if (station === 'custom') {
-            dropdownsContainer.style.display = 'none';
-        } else {
-            dropdownsContainer.style.display = 'block';
-            populatePlatforms(station);
-        }
-    }
+function confirmSelection() {
+    var station = document.getElementById('metroStation').value;
+    var startPlatform = document.getElementById('startPlatform').value;
+    var destinationPlatform = document.getElementById('destinationPlatform').value;
 
-    function confirmSelection() {
-        var station = document.getElementById('metroStation').value;
-        var startPlatform = document.getElementById('startPlatform').value;
-        var destinationPlatform = document.getElementById('destinationPlatform').value;
+    var presetValues = {
+        walkDistance: distances[station][startPlatform][destinationPlatform],
+        escalatorDistance: stairs[station][startPlatform][destinationPlatform],
+        numSteps: 0, // Preset to zero
+        walkwayLength: walkwayLengths[station][startPlatform][destinationPlatform]
+    };
 
-        var presetValues = {
-            walkDistance: distances[station][startPlatform][destinationPlatform],
-            escalatorDistance: stairs[station][startPlatform][destinationPlatform],
-            numSteps: 0, // Preset to zero
-            walkwayLength: 0 // Preset to zero
-        };
 
-        document.getElementById('walkDistance').value = presetValues.walkDistance;
-        document.getElementById('escalatorDistance').value = presetValues.escalatorDistance;
-        document.getElementById('numSteps').value = presetValues.numSteps;
-        document.getElementById('walkwayLength').value = presetValues.walkwayLength;
-    }
+    document.getElementById('walkDistance').value = presetValues.walkDistance;
+    document.getElementById('escalatorDistance').value = presetValues.escalatorDistance;
+    document.getElementById('numSteps').value = presetValues.numSteps;
+    document.getElementById('walkwayLength').value = presetValues.walkwayLength;
+}
 
-    function calculateTime() {
-        var walkDistance = parseFloat(document.getElementById('walkDistance').value) || 0;
-        var escalatorDistance = parseFloat(document.getElementById('escalatorDistance').value) || 0;
-        var numSteps = parseFloat(document.getElementById('numSteps').value) || 0;
-        var walkwayLength = parseFloat(document.getElementById('walkwayLength').value) || 0;
+function calculateTime() {
+    var walkDistance = parseFloat(document.getElementById('walkDistance').value) || 0;
+    var escalatorDistance = parseFloat(document.getElementById('escalatorDistance').value) || 0;
+    var numSteps = parseFloat(document.getElementById('numSteps').value) || 0;
+    var walkwayLength = parseFloat(document.getElementById('walkwayLength').value) || 0;
 
-        var walkingSpeed = 1.3; // m/s
-        var stairsSpeed = 1.9; // steps/s
-        var escalatorSpeed = 1.5; // steps/s
-        var walkwaySpeed = 0.5; // m/s
+    var walkingSpeed = 1.3; // m/s
+    var stairsSpeed = 1.9; // steps/s
+    var escalatorSpeed = 1.5; // steps/s
+    var walkwaySpeed = 0.5; // m/s
 
-        var walkingTime = walkDistance / walkingSpeed;
-        var stairsTime = numSteps / stairsSpeed;
-        var escalatorTime = escalatorDistance / escalatorSpeed;
-        var walkwayTime = walkwayLength / walkwaySpeed;
+    var walkingTime = walkDistance / walkingSpeed;
+    var stairsTime = numSteps / stairsSpeed;
+    var escalatorTime = escalatorDistance / escalatorSpeed;
+    var walkwayTime = walkwayLength / walkwaySpeed;
 
-        var estimatedTime = walkingTime + stairsTime + escalatorTime + walkwayTime;
+    var estimatedTime = walkingTime + stairsTime + escalatorTime + walkwayTime;
 
-        document.getElementById('calculatedTime').innerText = estimatedTime.toFixed(2);
-    }
+    document.getElementById('calculatedTime').innerText = estimatedTime.toFixed(2);
+}
 </script>
 <footer>
     Learn more about this project <a href="https://wordpress.com/post/omtsprojects.wordpress.com/228">here</a>.
