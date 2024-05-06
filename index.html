@@ -144,37 +144,35 @@
     <p class="calculated-time" id="calculatedTime">0.00</p>
 </div>
 
-<script>
-    const distances = {
-        diagonal: {
-            l3_trinitat: { l3_trinitat: 0, l3_zona: 157.89005, l5_cornelia: 190.0563, l5_hebron: 190.0263 },
-            l3_zona: { l3_trinitat: 157.89005, l3_zona: 0, l5_cornelia: 173.55875, l5_hebron: 173.52875 },
-            l5_cornelia: { l3_trinitat: 190.0563, l3_zona: 173.55875, l5_cornelia: 0, l5_hebron: 106.66 },
-            l5_hebron: { l3_trinitat: 190.0263, l3_zona: 173.52875, l5_cornelia: 106.66, l5_hebron: 0 }
-        },
-        sants: {
-            l3_trinitat: { l3_trinitat: 0, l3_zona: 123, l5_cornelia: 237.19, l5_hebron: 251.79 },
-            l3_zona: { l3_trinitat: 123, l3_zona: 0, l5_cornelia: 248.67, l5_hebron: 263.27 },
-            l5_cornelia: { l3_trinitat: 237.19, l3_zona: 248.67, l5_cornelia: 0, l5_hebron: 116.58 },
-            l5_hebron: { l3_trinitat: 251.79, l3_zona: 263.27, l5_cornelia: 116.58, l5_hebron: 0 }
-        }
-    };
+const distances = {
+    diagonal: {
+        l3_trinitat: { l3_trinitat: 0, l3_zona: 157.89005, l5_cornelia: 190.0563, l5_hebron: 190.0263 },
+        l3_zona: { l3_trinitat: 157.89005, l3_zona: 0, l5_cornelia: 173.55875, l5_hebron: 173.52875 },
+        l5_cornelia: { l3_trinitat: 190.0563, l3_zona: 173.55875, l5_cornelia: 0, l5_hebron: 106.66 },
+        l5_hebron: { l3_trinitat: 190.0263, l3_zona: 173.52875, l5_cornelia: 106.66, l5_hebron: 0 }
+    },
+    sants: {
+        l3_trinitat: { l3_trinitat: 0, l3_zona: 123, l5_cornelia: 237.19, l5_hebron: 251.79 },
+        l3_zona: { l3_trinitat: 123, l3_zona: 0, l5_cornelia: 248.67, l5_hebron: 263.27 },
+        l5_cornelia: { l3_trinitat: 237.19, l3_zona: 248.67, l5_cornelia: 0, l5_hebron: 116.58 },
+        l5_hebron: { l3_trinitat: 251.79, l3_zona: 263.27, l5_cornelia: 116.58, l5_hebron: 0 }
+    }
+};
 
-
-    const stairs = {
-        diagonal: {
-            l3_trinitat: { l3_trinitat: 0, l3_zona: 47, l5_cornelia: 58, l5_hebron: 46 },
-            l3_zona: { l3_trinitat: 47, l3_zona: 0, l5_cornelia: 59, l5_hebron: 47 },
-            l5_cornelia: { l3_trinitat: 58, l3_zona: 59, l5_cornelia: 0, l5_hebron: 70 },
-            l5_hebron: { l3_trinitat: 58, l3_zona: 59, l5_cornelia: 70, l5_hebron: 0 }
-        },
-        sants: {
-            l3_trinitat: { l3_trinitat: 0, l3_zona: 68, l5_cornelia: 34, l5_hebron: 88 },
-            l3_zona: { l3_trinitat: 68, l3_zona: 0, l5_cornelia: 34, l5_hebron: 88 },
-            l5_cornelia: { l3_trinitat: 34, l3_zona: 34, l5_cornelia: 0, l5_hebron: 54 },
-            l5_hebron: { l3_trinitat: 88, l3_zona: 88, l5_cornelia: 54, l5_hebron: 0 }
-        }
-    };
+const walkwayLengths = {
+    diagonal: {
+        l3_trinitat: { l3_trinitat: 0, l3_zona: 0, l5_cornelia: 71.28, l5_hebron: 71.28 },
+        l3_zona: { l3_trinitat: 0, l3_zona: 0, l5_cornelia: 71.28, l5_hebron: 71.28 },
+        l5_cornelia: { l3_trinitat: 71.28, l3_zona: 71.28, l5_cornelia: 0, l5_hebron: 0 },
+        l5_hebron: { l3_trinitat: 71.28, l3_zona: 71.28, l5_cornelia: 0, l5_hebron: 0 }
+    },
+    sants: {
+        l3_trinitat: { l3_trinitat: 0, l3_zona: 0, l5_cornelia: 0, l5_hebron: 0 },
+        l3_zona: { l3_trinitat: 0, l3_zona: 0, l5_cornelia: 0, l5_hebron: 0 },
+        l5_cornelia: { l3_trinitat: 0, l3_zona: 0, l5_cornelia: 0, l5_hebron: 0 },
+        l5_hebron: { l3_trinitat: 0, l3_zona: 0, l5_cornelia: 0, l5_hebron: 0 }
+    }
+};
 
     function populatePlatforms(station) {
         var startPlatformSelect = document.getElementById('startPlatform');
