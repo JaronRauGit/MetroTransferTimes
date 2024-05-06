@@ -57,12 +57,25 @@
             font-size: 12px;
             color: #666;
         }
+        .result-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .calculated-time {
+            font-size: 45px;
+            font-weight: bold;
+            background: linear-gradient(to top right, rgba(19, 53, 173, 1), rgba(39, 137, 207, 1));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
 
-<h2>General model to estimate interchange time</h2>
-<p>
+<h2 style="font-size: 45px; font-weight: bold; background: linear-gradient(to top right, rgba(19, 53, 173, 1), rgba(39, 137, 207, 1)); -webkit-background-clip: text; background-clip: text; color: transparent; display: inline-block;">General model to estimate interchange time</h2>
+<p style="font-size: 18px;">
     Model created to estimate the interchange time between metro lines. More information about the project <a href="https://wordpress.com/post/omtsprojects.wordpress.com/228">here</a>.
 </p>
 
@@ -98,10 +111,16 @@
         </select>
     </div>
 
-    <button type="button" onclick="calculateTime()">Calculate Time</button>
+<button type="button" onclick="calculateTime()" style="background: linear-gradient(to top right, rgba(0, 102, 34, 1), rgba(111, 204, 97, 1)); color: white; font-weight: bold; padding: 10px; border: none; border-radius: 4px; cursor: pointer; transition: background 0.3s;">
+    Calculate Time
+</button>
+    
 </form>
 
-<p id="result"></p>
+<div class="result-container">
+    <p>Your calculated travel time is:</p>
+    <p class="calculated-time" id="calculatedTime">0.00</p>
+</div>
 
 <script>
     function setPreset() {
@@ -139,7 +158,7 @@
 
         var estimatedTime = walkingTime + stairsTime + escalatorTime + walkwayTime;
 
-        document.getElementById('result').innerText = "Your estimated time is: " + estimatedTime.toFixed(2) + " seconds";
+        document.getElementById('calculatedTime').innerText = estimatedTime.toFixed(2);
     }
 </script>
 <footer>
