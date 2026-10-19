@@ -1,26 +1,22 @@
 # Between the Lines
 
-A small, animated Barcelona metro station wrapped around a transfer time calculator. The cutaway station has a street level, stairs, escalator, moving walkway, platform, commuters, and a train that arrives, opens its doors, and leaves. Calculating a route lights up a path through the scene.
+A small, interactive Barcelona metro diorama for estimating the time it takes to change lines. The station is rendered with real 3D meshes in an orthographic view. Its street, concourse, moving walkway, stairs, escalator and platform form a continuous cutaway world; a three-car train arrives, opens its doors and departs.
 
-## Run locally
+## Run
 
-This is a static site with no build or package installation. From this directory, run:
+Requires Node.js 20.19+ or 22.12+ (Node 24 is supported).
 
 ```sh
-python3 -m http.server 8000 --bind 127.0.0.1
+npm ci
+npm run dev
 ```
 
-Open `http://127.0.0.1:8000/` in a browser. The app also works by opening `index.html` directly.
+Open the local address printed by Vite. To check a production build, run `npm run build` and `npm run preview`. Run the calculation tests with `npm test`.
 
-## Calculator
+## How it works
 
-Enter nonnegative distances, or leave a field blank for zero. The estimate adds:
+Enter distances or leave a field blank for zero. The estimate adds walking metres ÷ 1.3 m/s, escalator steps ÷ 1.5 steps/s, stair steps ÷ 1.9 steps/s, and moving walkway metres ÷ 0.5 m/s. Example routes fill the inputs. Calculating a route animates a marker through the 3D station; you can edit the values or start over.
 
-- Walking metres / 1.3 metres per second
-- Escalator steps / 1.5 steps per second
-- Stair steps / 1.9 steps per second
-- Moving walkway metres / 0.5 metres per second
+The app uses React and React Three Fiber. The reusable world pieces are in `src/world/`: `StationWorld.jsx` assembles the levels and lighting, `Architecture.jsx` supplies the buildings and station infrastructure, `Train.jsx` models and animates the train, `Details.jsx` contains people, signs and route feedback, and `Primitives.jsx` supplies shared geometry and materials. `src/components/CalculatorPanel.jsx` is the HTML interface. No external assets, accounts or services are needed at runtime.
 
-The time is displayed in minutes and seconds, with the precise total in seconds below it. The two example routes fill the inputs and calculate immediately. Start another journey clears the form and result.
-
-The artwork is an inline SVG in `index.html`; `style.css` handles its animation and responsive layout, and `script.js` handles the calculator. Animations respect the user's reduced motion preference.
+Drag to turn the orthographic camera and scroll to zoom. The renderer caps pixel density, uses a half-resolution ambient occlusion pass and a compact shadow map, and reduces animation for users who request reduced motion.
