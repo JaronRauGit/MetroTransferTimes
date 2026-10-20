@@ -24,12 +24,12 @@ function doorOpening(phase) {
   return 1 - smooth(phase - 15);
 }
 
-function DoorPair({ side, reducedMotion }) {
+function DoorPair({ side, reducedMotion, phaseOffset }) {
   const left = useRef();
   const right = useRef();
   useFrame(({ clock }) => {
     if (!left.current || !right.current) return;
-    const phase = (clock.elapsedTime + startOffset) % cycleSeconds;
+    const phase = (clock.elapsedTime + phaseOffset) % cycleSeconds;
     const opening = reducedMotion ? 0 : doorOpening(phase);
     left.current.position.x = -.22 - .34 * opening;
     right.current.position.x = .22 + .34 * opening;
@@ -48,13 +48,13 @@ function DoorPair({ side, reducedMotion }) {
   </group>;
 }
 
-function TrainCar({ x, index, reducedMotion }) {
+function TrainCar({ x, index, reducedMotion, phaseOffset, line, stripe }) {
   const car = useRef();
-  const frontCar = index === 2;
+  const frontCar = index === 3;
   useFrame(({ clock }) => {
     if (!car.current) return;
-    const phase = (clock.elapsedTime + startOffset) % cycleSeconds;
-    car.current.visible = reducedMotion || Math.abs(trainPosition(phase) + x) < 8.25;
+    const phase = (clock.elapsedTime + phaseOffset) % cycleSeconds;
+    car.current.visible = reducedMotion || Math.abs(trainPosition(phase) + x) < 8.55;
   });
   return <group ref={car} position={[x, 0, 0]}>
     <Block position={[0, .34, 0]} size={[3.1, .28, 1.36]} color="#4e5b5d" />
@@ -65,16 +65,16 @@ function TrainCar({ x, index, reducedMotion }) {
       <meshStandardMaterial color="#b4bcb5" roughness={.72} metalness={.1} />
     </RoundedBox>
     <Block position={[0, .39, .735]} size={[3.02, .2, .025]} color={colors.tealDark} />
-    <Block position={[0, 1.51, .738]} size={[3.01, .07, .025]} color={colors.coral} />
+    <Block position={[0, 1.51, .738]} size={[3.01, .07, .025]} color={stripe} />
     <Block position={[0, .39, -.735]} size={[3.02, .2, .025]} color={colors.tealDark} />
-    <Block position={[0, 1.51, -.738]} size={[3.01, .07, .025]} color={colors.coral} />
+    <Block position={[0, 1.51, -.738]} size={[3.01, .07, .025]} color={stripe} />
     {[-1, 1].map(side => <group key={side}>
       {[-1.13, .98].map(pos => <group key={pos}>
         <Block position={[pos, 1.12, side * .754]} size={[.56, .55, .038]} color={colors.tealDark} />
         <Block position={[pos, 1.12, side * .781]} size={[.47, .46, .014]} color="#6aaeb5" roughness={.19} metalness={.21} />
         <Block position={[pos - .12, 1.27, side * .791]} size={[.18, .035, .014]} color="#a7cdd0" castShadow={false} />
       </group>)}
-      <DoorPair side={side} reducedMotion={reducedMotion} />
+      <DoorPair side={side} reducedMotion={reducedMotion} phaseOffset={phaseOffset} />
     </group>)}
     {[-.99, .99].map(wheelX => [-.52, .52].map(wheelZ => <mesh key={`${wheelX}-${wheelZ}`} position={[wheelX, .16, wheelZ]} rotation={[Math.PI / 2, 0, 0]} castShadow>
       <cylinderGeometry args={[.18, .18, .1, 10]} /><meshStandardMaterial color="#3f4d50" roughness={.85} />
@@ -86,17 +86,17 @@ function TrainCar({ x, index, reducedMotion }) {
       <Block position={[1.655, 1.05, 0]} size={[.018, .54, .87]} color="#6aaeb5" roughness={.22} metalness={.2} />
       <Block position={[1.68, .54, -.46]} size={[.035, .14, .19]} color="#ffe9b0" roughness={.3} />
       <Block position={[1.68, .54, .46]} size={[.035, .14, .19]} color="#ffe9b0" roughness={.3} />
-      <Sign position={[1.7, 1.5, 0]} rotation={[0, Math.PI / 2, 0]} size={[.53, .19]} text="L3" background={colors.olive} foreground={colors.warmWhite} frame={colors.olive} />
+      <Sign position={[1.7, 1.5, 0]} rotation={[0, Math.PI / 2, 0]} size={[.53, .19]} text={line} background={stripe} foreground={colors.warmWhite} frame={stripe} />
     </>}
   </group>;
 }
 
-export default function Train({ reducedMotion }) {
+export default function Train({ reducedMotion, position = [0, -1.7, 4.66], line = 'L3', stripe = colors.olive, phaseOffset = startOffset }) {
   const train = useRef();
   useFrame(({ clock }) => {
-    if (train.current) train.current.position.x = reducedMotion ? 0 : trainPosition((clock.elapsedTime + startOffset) % cycleSeconds);
+    if (train.current) train.current.position.x = position[0] + (reducedMotion ? 0 : trainPosition((clock.elapsedTime + phaseOffset) % cycleSeconds));
   });
-  return <group ref={train} position={[0, -1.7, 4.66]}>
-    {[-3.22, 0, 3.22].map((x, index) => <TrainCar key={x} x={x} index={index} reducedMotion={reducedMotion} />)}
+  return <group ref={train} position={position}>
+    {[-4.83, -1.61, 1.61, 4.83].map((x, index) => <TrainCar key={x} x={x} index={index} reducedMotion={reducedMotion} phaseOffset={phaseOffset} line={line} stripe={stripe} />)}
   </group>;
 }

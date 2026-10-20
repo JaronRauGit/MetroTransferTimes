@@ -1,6 +1,6 @@
 # Between the Lines
 
-A small, interactive Barcelona metro diorama for estimating the time it takes to change lines. The station is rendered with real 3D meshes in an orthographic view. Its street, concourse, moving walkway, stairs, escalator and platform form a continuous cutaway world; a three-car train arrives, opens its doors and departs.
+A miniature Barcelona metro cutaway for estimating the time it takes to change lines. Scroll from a Passeig de Gràcia streetscape through an L3 platform and connecting tunnel to an L4 platform. The fixed orthographic view reveals each level as the layers above become translucent. Two four-car trains arrive, open their doors and depart.
 
 ## Run
 
@@ -15,8 +15,8 @@ Open the local address printed by Vite. To check a production build, run `npm ru
 
 ## How it works
 
-Enter distances or leave a field blank for zero. The estimate adds walking metres ÷ 1.3 m/s, escalator steps ÷ 1.5 steps/s, stair steps ÷ 1.9 steps/s, and moving walkway metres ÷ 0.5 m/s. Example routes fill the inputs. Calculating a route animates a marker through the 3D station; you can edit the values or start over.
+Enter distances or leave a field blank for zero. The estimate adds walking metres ÷ 1.3 m/s, escalator steps ÷ 1.5 steps/s, stair steps ÷ 1.9 steps/s, and moving walkway metres ÷ 0.5 m/s. The transfer model changes as you type: walking distance stretches the tunnel, a moving walkway only appears when its length is nonzero, escalator steps add an escalator and stair steps change the stair detail. The drawing uses a curved scale so long transfers remain visible; it is a schematic interpretation rather than a measured station plan. Example routes fill the inputs. Calculating animates a marker along the transfer and moves the view underground; you can edit the values or start over.
 
-The app uses React and React Three Fiber. The reusable world pieces are in `src/world/`: `StationWorld.jsx` assembles the levels and lighting, `Architecture.jsx` supplies the buildings and station infrastructure, `Train.jsx` models and animates the train, `Details.jsx` contains people, signs and route feedback, and `Primitives.jsx` supplies shared geometry and materials. `src/components/CalculatorPanel.jsx` is the HTML interface. No external assets, accounts or services are needed at runtime.
+The app uses React and React Three Fiber. The reusable world pieces are in `src/world/`: `StationWorld.jsx` assembles the levels, fixed camera, scroll fading and lighting; `stationLayout.js` maps transfer values to geometry; `Architecture.jsx` supplies buildings and station infrastructure; `Train.jsx` models and animates the trains; `Details.jsx` contains people and signs; and `Primitives.jsx` supplies shared geometry and materials. `src/components/CalculatorPanel.jsx` is the HTML interface. No external assets, accounts or services are needed at runtime.
 
-Drag to turn the orthographic camera and scroll to zoom. The renderer caps pixel density, uses a half-resolution ambient occlusion pass and a compact shadow map, and reduces animation for users who request reduced motion.
+Scroll the page, swipe on touchscreens or use the level buttons to move between the street, transfer tunnel and lower platform. The camera angle stays fixed. The renderer caps pixel density, uses a half-resolution ambient occlusion pass and a compact shadow map, and reduces animation for users who request reduced motion.
