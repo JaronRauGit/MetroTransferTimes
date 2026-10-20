@@ -1,6 +1,7 @@
-import { useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
+import * as THREE from 'three';
 import { Block, Sign, colors } from './Primitives.jsx';
 
 const cycleSeconds = 22;
@@ -49,14 +50,8 @@ function DoorPair({ side, reducedMotion, phaseOffset }) {
 }
 
 function TrainCar({ x, index, reducedMotion, phaseOffset, line, stripe }) {
-  const car = useRef();
   const frontCar = index === 3;
-  useFrame(({ clock }) => {
-    if (!car.current) return;
-    const phase = (clock.elapsedTime + phaseOffset) % cycleSeconds;
-    car.current.visible = reducedMotion || Math.abs(trainPosition(phase) + x) < 8.55;
-  });
-  return <group ref={car} position={[x, 0, 0]}>
+  return <group position={[x, 0, 0]}>
     <Block position={[0, .34, 0]} size={[3.1, .28, 1.36]} color="#4e5b5d" />
     <RoundedBox args={[3.13, 1.4, 1.44]} radius={.16} smoothness={3} position={[0, .95, 0]} castShadow receiveShadow>
       <meshStandardMaterial color="#eee9dc" roughness={.68} metalness={.12} />
@@ -93,8 +88,31 @@ function TrainCar({ x, index, reducedMotion, phaseOffset, line, stripe }) {
 
 export default function Train({ reducedMotion, position = [0, -1.7, 4.66], line = 'L3', stripe = colors.olive, phaseOffset = startOffset }) {
   const train = useRef();
+  const planes = useMemo(() => [new THREE.Plane(), new THREE.Plane()], []);
+  const origin = useMemo(() => new THREE.Vector3(), []);
+  const axis = useMemo(() => new THREE.Vector3(), []);
+  const oppositeAxis = useMemo(() => new THREE.Vector3(), []);
+  const edge = useMemo(() => new THREE.Vector3(), []);
+  useLayoutEffect(() => {
+    train.current.traverse(object => {
+      if (!object.isMesh) return;
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      materials.forEach(material => {
+        material.clippingPlanes = planes;
+        material.clipShadows = true;
+        material.needsUpdate = true;
+      });
+    });
+  }, [planes]);
   useFrame(({ clock }) => {
-    if (train.current) train.current.position.x = position[0] + (reducedMotion ? 0 : trainPosition((clock.elapsedTime + phaseOffset) % cycleSeconds));
+    if (!train.current) return;
+    train.current.position.x = position[0] + (reducedMotion ? 0 : trainPosition((clock.elapsedTime + phaseOffset) % cycleSeconds));
+    const platform = train.current.parent;
+    platform.updateWorldMatrix(true, false);
+    origin.setFromMatrixPosition(platform.matrixWorld);
+    axis.set(1, 0, 0).transformDirection(platform.matrixWorld);
+    planes[0].setFromNormalAndCoplanarPoint(axis, edge.copy(origin).addScaledVector(axis, -7.08));
+    planes[1].setFromNormalAndCoplanarPoint(oppositeAxis.copy(axis).negate(), edge.copy(origin).addScaledVector(axis, 7.08));
   });
   return <group ref={train} position={position}>
     {[-4.83, -1.61, 1.61, 4.83].map((x, index) => <TrainCar key={x} x={x} index={index} reducedMotion={reducedMotion} phaseOffset={phaseOffset} line={line} stripe={stripe} />)}

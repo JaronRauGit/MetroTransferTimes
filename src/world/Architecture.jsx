@@ -53,10 +53,12 @@ export function Palm({ position, scale = 1 }) {
 export function Staircase({ x, topY, bottomY, topZ, bottomZ, width = 1.55, steps = 12, color = colors.limestone }) {
   const rise = topY - bottomY;
   const run = bottomZ - topZ;
+  const length = Math.hypot(rise, run);
   return <group>
+    <Block position={[x, (topY + bottomY) / 2 - .13, (topZ + bottomZ) / 2]} size={[width + .06, .18, length]} rotation={[Math.atan2(rise, run), 0, 0]} color="#b7aa96" />
     {Array.from({ length: steps }, (_, i) => {
       const t = (i + .5) / steps;
-      return <Block key={i} position={[x, topY - (i + 1) * rise / steps + .04, topZ + t * run]} size={[width, .1, run / steps + .025]} color={i % 2 ? color : '#e4cfb0'} />;
+      return <Block key={i} position={[x, topY - (i + 1) * rise / steps + .035, topZ + t * run]} size={[width, .1, run / steps + .025]} color={i % 2 ? color : '#e4cfb0'} />;
     })}
     {[-1, 1].map(side => {
       const edge = x + side * (width / 2 + .09);
@@ -69,31 +71,50 @@ export function Staircase({ x, topY, bottomY, topZ, bottomZ, width = 1.55, steps
   </group>;
 }
 
-function MovingTreads({ x, topY, bottomY, topZ, bottomZ, reducedMotion }) {
+export function StaircaseAlongX({ topX, bottomX, yTop, yBottom, z, width = 1.52, steps = 18 }) {
+  const run = bottomX - topX;
+  const rise = yTop - yBottom;
+  return <group>
+    <Block position={[(topX + bottomX) / 2, (yTop + yBottom) / 2 - .13, z]} size={[Math.hypot(run, rise), .2, width + .06]} rotation={[0, 0, -Math.atan2(rise, run)]} color="#b7a891" />
+    {Array.from({ length: steps }, (_, index) => {
+      const t = (index + .5) / steps;
+      return <Block key={index} position={[topX + t * run, yTop - (index + 1) * rise / steps + .04, z]} size={[run / steps + .02, .11, width]} color={index % 2 ? '#f0dec1' : '#e2caa8'} />;
+    })}
+    {[-1, 1].map(side => {
+      const edgeZ = z + side * (width / 2 + .1);
+      return <group key={side}>
+        <Rod from={[topX, yTop + .65, edgeZ]} to={[bottomX, yBottom + .65, edgeZ]} radius={.044} color={colors.tealDark} />
+        {[0, .5, 1].map(t => <Rod key={t} from={[topX + t * run, yTop - t * rise + .1, edgeZ]} to={[topX + t * run, yTop - t * rise + .65, edgeZ]} radius={.032} color={colors.metal} />)}
+      </group>;
+    })}
+  </group>;
+}
+
+function MovingTreads({ x, topY, bottomY, topZ, bottomZ, count, reducedMotion }) {
   const treads = useRef([]);
   useFrame(({ clock }) => {
     if (reducedMotion) return;
     const flow = clock.getElapsedTime() * .15;
     treads.current.forEach((mesh, i) => {
       if (!mesh) return;
-      const t = ((i / 16 + flow) % 1);
+      const t = ((i / count + flow) % 1);
       mesh.position.set(x, topY + (bottomY - topY) * t + .055, topZ + (bottomZ - topZ) * t);
     });
   });
-  return <>{Array.from({ length: 16 }, (_, i) => {
-    const t = i / 16;
+  return <>{Array.from({ length: count }, (_, i) => {
+    const t = i / count;
     return <Block key={i} ref={node => { treads.current[i] = node; }} position={[x, topY + (bottomY - topY) * t + .055, topZ + (bottomZ - topZ) * t]} size={[1.28, .055, .14]} color={i % 2 ? '#b5c8bd' : '#809f9a'} castShadow={false} />;
   })}</>;
 }
 
-export function Escalator({ x = 2.55, topY = .58, bottomY = -1.42, topZ = 1.38, bottomZ = 3.05, reducedMotion }) {
+export function Escalator({ x = 2.55, topY = .58, bottomY = -1.42, topZ = 1.38, bottomZ = 3.05, treadCount = 16, reducedMotion }) {
   const rise = topY - bottomY;
   const run = bottomZ - topZ;
   const length = Math.hypot(rise, run);
   const angle = Math.atan2(rise, run);
   return <group>
     <Block position={[x, (topY + bottomY) / 2 - .06, (topZ + bottomZ) / 2]} size={[1.75, .22, length]} rotation={[angle, 0, 0]} color={colors.tealDark} />
-    <MovingTreads x={x} topY={topY} bottomY={bottomY} topZ={topZ} bottomZ={bottomZ} reducedMotion={reducedMotion} />
+    <MovingTreads x={x} topY={topY} bottomY={bottomY} topZ={topZ} bottomZ={bottomZ} count={treadCount} reducedMotion={reducedMotion} />
     {[-1, 1].map(side => {
       const edge = x + side * .87;
       return <group key={side}>

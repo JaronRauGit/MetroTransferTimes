@@ -18,10 +18,11 @@ test('a moving walkway only appears when its length is entered', () => {
   assert.ok(present.walkwayVisualLength > 5);
 });
 
-test('entered stair and escalator segments affect the model', () => {
+test('the station always has stairs and an escalator, with input affecting detail', () => {
   const base = getStationLayout();
   const route = getStationLayout({ numSteps: '45', escalatorDistance: '24' });
+  assert.ok(base.stairTreads > 0);
+  assert.ok(base.escalatorTreads > 0);
   assert.ok(route.stairTreads > base.stairTreads);
-  assert.equal(base.hasEscalator, false);
-  assert.equal(route.hasEscalator, true);
+  assert.ok(route.escalatorTreads > base.escalatorTreads);
 });

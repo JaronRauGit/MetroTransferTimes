@@ -1,6 +1,6 @@
 # Between the Lines
 
-A miniature Barcelona metro cutaway for estimating the time it takes to change lines. Scroll from a Passeig de Gràcia streetscape through an L3 platform and connecting tunnel to an L4 platform. The fixed orthographic view reveals each level as the layers above become translucent. Two four-car trains arrive, open their doors and depart.
+An interactive miniature Barcelona metro interchange for estimating transfer time. The default Verdaguer scene shows a narrow street above two orthogonal underground platforms, with an entrance cut into the pavement, fare gates, connecting stairs and escalator, and four-car L4/L5 trains. The camera starts with the whole cutaway in view: drag to turn it and scroll to zoom.
 
 ## Run
 
@@ -11,12 +11,10 @@ npm ci
 npm run dev
 ```
 
-Open the local address printed by Vite. To check a production build, run `npm run build` and `npm run preview`. Run the calculation tests with `npm test`.
+Open the local address printed by Vite. Run `npm run build` to check the production bundle and `npm test` for the calculation and layout tests.
 
 ## How it works
 
-Enter distances or leave a field blank for zero. The estimate adds walking metres ÷ 1.3 m/s, escalator steps ÷ 1.5 steps/s, stair steps ÷ 1.9 steps/s, and moving walkway metres ÷ 0.5 m/s. The transfer model changes as you type: walking distance stretches the tunnel, a moving walkway only appears when its length is nonzero, escalator steps add an escalator and stair steps change the stair detail. The drawing uses a curved scale so long transfers remain visible; it is a schematic interpretation rather than a measured station plan. Example routes fill the inputs. Calculating animates a marker along the transfer and moves the view underground; you can edit the values or start over.
+Name the station and choose the two metro lines in the dock below the scene. The line colors, train markings, and signs update immediately. Enter transfer distances or leave a field blank for zero. The estimate adds walking metres ÷ 1.3 m/s, escalator steps ÷ 1.5 steps/s, stair steps ÷ 1.9 steps/s, and moving walkway metres ÷ 0.5 m/s. Walking distance changes the visible tunnel length; a moving walkway appears only when its input is positive; stair and escalator steps change their detail. The entrance and the basic stairs and escalator stay in place. The scene is schematic, with a curved visual scale that keeps long transfers in view. The example routes fill and calculate the inputs. Calculating lights a route through the station.
 
-The app uses React and React Three Fiber. The reusable world pieces are in `src/world/`: `StationWorld.jsx` assembles the levels, fixed camera, scroll fading and lighting; `stationLayout.js` maps transfer values to geometry; `Architecture.jsx` supplies buildings and station infrastructure; `Train.jsx` models and animates the trains; `Details.jsx` contains people and signs; and `Primitives.jsx` supplies shared geometry and materials. `src/components/CalculatorPanel.jsx` is the HTML interface. No external assets, accounts or services are needed at runtime.
-
-Scroll the page, swipe on touchscreens or use the level buttons to move between the street, transfer tunnel and lower platform. The camera angle stays fixed. The renderer caps pixel density, uses a half-resolution ambient occlusion pass and a compact shadow map, and reduces animation for users who request reduced motion.
+The scene is built from React Three Fiber meshes in `src/world/`. `StationWorld.jsx` assembles the cutaway and orbit camera, `stationLayout.js` maps inputs to geometry, `Surface.jsx` builds the Barcelona streetscape and metro entrance, `Architecture.jsx` supplies station structures, `Train.jsx` animates trains behind track portals, and `PeopleFlow.jsx` moves commuters between the platforms and street. `lineCatalog.js` defines the line palette. `src/components/CalculatorPanel.jsx` is the HTML calculator dock. The renderer caps pixel density, uses ambient occlusion and contact shadows, and respects reduced-motion preferences. No external assets, accounts, or services are needed at runtime.
