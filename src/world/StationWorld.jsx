@@ -9,7 +9,7 @@ import { Traveller, Planter } from './Details.jsx';
 import BarcelonaStreet from './Surface.jsx';
 import PeopleFlow, { TransferRoute } from './PeopleFlow.jsx';
 import Train from './Train.jsx';
-import CreatorsNook from './CreatorsNook.jsx';
+import CreatorsNook, { creatorsNookBounds } from './CreatorsNook.jsx';
 import { getStationLayout, stationDimensions as d } from './stationLayout.js';
 import { lineColor, stationLabel } from './lineCatalog.js';
 
@@ -23,7 +23,8 @@ function framingPoints(layout) {
   const points = baseOutline(layout).map(([x, z]) => new THREE.Vector3(x, layout.groundY - .85, z));
   const addBox = (min, max) => { for (const x of [min[0], max[0]]) for (const y of [min[1], max[1]]) for (const z of [min[2], max[2]]) points.push(new THREE.Vector3(x, y, z)); };
   addBox([layout.streetMinX, layout.streetY, -6.8], [layout.streetMaxX, layout.streetY, 1.4]);
-  addBox([layout.upperX - 5.4, layout.upperY - 1.6, -10.4], [layout.upperX + 1.4, layout.streetY, -6.4]);
+  const creatorsBounds = creatorsNookBounds(layout.upperX, layout.upperY);
+  addBox(creatorsBounds.min, creatorsBounds.max);
   [[layout.upperX - 5.95, 2.9, 3.7], [layout.upperX - 1.82, 3.9, 4.7], [layout.upperX + 2.85, 3.3, 3.95], [layout.lowerX + 2.08, 3.5, 3.6]].forEach(([x, width, height]) => addBox([x - width / 2, layout.streetY, -6.55], [x + width / 2, layout.streetY + height, -4.1]));
   return points;
 }
@@ -54,10 +55,10 @@ function SceneCamera({ layout }) {
     camera.updateProjectionMatrix();
     orbit.target.copy(center);
     orbit.minZoom = fit * .65;
-    orbit.maxZoom = fit * 3;
+    orbit.maxZoom = fit * 4;
     orbit.update();
   }, [camera, layout, size.width, size.height]);
-  return <OrbitControls ref={controls} makeDefault enablePan={false} enableDamping dampingFactor={.085} minPolarAngle={.48} maxPolarAngle={1.34} rotateSpeed={.48} zoomSpeed={.7} />;
+  return <OrbitControls ref={controls} makeDefault enablePan={false} zoomToCursor enableDamping dampingFactor={.085} minPolarAngle={.48} maxPolarAngle={1.34} rotateSpeed={.48} zoomSpeed={.7} />;
 }
 
 function Tracks({ endX }) {
