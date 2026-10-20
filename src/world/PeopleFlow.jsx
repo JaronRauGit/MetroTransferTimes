@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Block, Rod } from './Primitives.jsx';
+import { Block } from './Primitives.jsx';
 import { getStationPaths, samplePath } from './journeyPaths.js';
 import { trainCycleSeconds } from './trainSchedule.js';
 
@@ -43,22 +43,5 @@ export default function PeopleFlow({ layout, reducedMotion }) {
     <Commuter shirt="#d5aa6c" path={paths.exit} startsAt={4} size={.8} reducedMotion={reducedMotion} />
     <Commuter shirt="#73998b" path={paths.reverse} startsAt={6} size={.84} linger reducedMotion={reducedMotion} />
     <Commuter shirt="#a47b9e" path={paths.transfer} startsAt={3.5} size={.8} reducedMotion={reducedMotion} />
-  </group>;
-}
-
-export function TransferRoute({ layout, active, reducedMotion }) {
-  const marker = useRef();
-  const started = useRef(null);
-  const path = useMemo(() => getStationPaths(layout).transfer, [layout]);
-  useFrame(({ clock }) => {
-    if (!active || !marker.current || reducedMotion) return;
-    if (started.current === null) started.current = clock.elapsedTime;
-    const sample = samplePath(path, ((clock.elapsedTime - started.current) * 1.6) % path.duration);
-    marker.current.position.set(sample.p[0], sample.p[1] + .2, sample.p[2]);
-  });
-  if (!active) return null;
-  return <group userData={{ collisionRole: 'route' }}>
-    {path.nodes.slice(0, -1).map((point, index) => <Rod key={index} from={point.p.map((v, axis) => v + (axis === 1 ? .12 : 0))} to={path.nodes[index + 1].p.map((v, axis) => v + (axis === 1 ? .12 : 0))} radius={.037} color="#f5c777" />)}
-    <mesh ref={marker} position={path.nodes[0].p.map((v, axis) => v + (axis === 1 ? .2 : 0))}><sphereGeometry args={[.17, 12, 8]} /><meshStandardMaterial color="#fff6cf" emissive="#e4a247" emissiveIntensity={1.6} /></mesh>
   </group>;
 }

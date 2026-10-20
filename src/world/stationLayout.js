@@ -17,9 +17,25 @@ const metres = value => Number.isFinite(Number(value)) ? Math.max(0, Number(valu
 const compressed = (value, scale) => -Math.expm1(-value / scale);
 const box = (name, x, y, z) => ({ name, min: [x[0], y[0], z[0]], max: [x[1], y[1], z[1]] });
 
+// Tween bounded geometry controls, so even huge distance changes grow evenly.
+export function getStationShape(values = defaultJourney) {
+  return {
+    tunnel: compressed(metres(values.walkDistance) + metres(values.walkwayLength), 260),
+    escalator: compressed(metres(values.escalatorDistance), 45),
+    stairs: compressed(metres(values.stairDistance), 40),
+    walkway: metres(values.walkwayLength) > 0 ? 1.2 + 5.6 * compressed(metres(values.walkwayLength), 60) : 0,
+  };
+}
+
+export function interpolateStationShape(from, to, progress) {
+  const t = Math.max(0, Math.min(1, progress));
+  const ease = t * t * (3 - 2 * t);
+  return Object.fromEntries(Object.keys(to).map(key => [key, progress >= 1 ? to[key] : from[key] + (to[key] - from[key]) * ease]));
+}
+
 // Every y value is a finished walking surface, not the centre of a slab.
 // Curves approach a finite limit; long inputs never create unbounded geometry.
-export function getStationLayout(values = defaultJourney) {
+export function getStationLayout(values = defaultJourney, shape = getStationShape(values)) {
   const walking = metres(values.walkDistance);
   const walkway = metres(values.walkwayLength);
   const escalator = metres(values.escalatorDistance);
@@ -27,15 +43,15 @@ export function getStationLayout(values = defaultJourney) {
   const upperX = -3.2;
   const upperY = 0;
   const upperZ = 0;
-  const lowerX = 9.5 + 14 * compressed(walking + walkway, 260);
+  const lowerX = 9.5 + 14 * shape.tunnel;
   // Keep the upper railway continuous above the more distant lower line.
   // A short sleeve at its far end hides departing trains inside the tunnel.
   const upperTrackEndX = lowerX + stationDimensions.trackZ + 2 - upperX;
   const lowerZ = 1;
-  const escalatorRun = 2.9 + 3.8 * compressed(escalator, 45);
-  const escalatorRise = 1.65 + 1.15 * compressed(escalator, 45);
-  const stairRun = 3.6 + 4 * compressed(stairs, 40);
-  const stairRise = 3 + 1.65 * compressed(stairs, 40);
+  const escalatorRun = 2.9 + 3.8 * shape.escalator;
+  const escalatorRise = 1.65 + 1.15 * shape.escalator;
+  const stairRun = 3.6 + 4 * shape.stairs;
+  const stairRise = 3 + 1.65 * shape.stairs;
   const tunnelY = upperY - escalatorRise;
   const lowerY = tunnelY - stairRise;
   const upperConnectionX = upperX + 1.8;
@@ -49,8 +65,7 @@ export function getStationLayout(values = defaultJourney) {
   const tunnelEndX = lowerX + 1.18;
   const corridorLength = tunnelEndX - tunnelStartX;
   const lowerStairBottomZ = tunnelNearZ - stairRun;
-  const walkwayVisualLength = walkway > 0
-    ? Math.min(lowerX - escalatorX - 2, 1.2 + 5.6 * compressed(walkway, 60)) : 0;
+  const walkwayVisualLength = Math.min(lowerX - escalatorX - 2, shape.walkway);
   const walkwayX = (escalatorX + lowerX) / 2;
   const entranceX = upperX - 3.8;
   const entranceZ = .25;
@@ -84,7 +99,7 @@ export function getStationLayout(values = defaultJourney) {
     tunnelY, tunnelZ, tunnelNearZ, tunnelFarZ, tunnelStartX, tunnelEndX, corridorLength,
     lowerStairBottomZ, upperDescent, lowerDescent,
     entranceX, entranceZ, entranceTopX, entranceBottomX, streetY, streetMinX, streetMaxX, groundY,
-    hasWalkway: walkway > 0, walkwayVisualLength, walkwayX,
+    hasWalkway: walkwayVisualLength > .001, walkwayVisualLength, walkwayX,
     walkwayStartX: walkwayX - walkwayVisualLength / 2,
     walkwayEndX: walkwayX + walkwayVisualLength / 2,
     stairTreads: Math.min(36, Math.ceil(stairRun / .22)),

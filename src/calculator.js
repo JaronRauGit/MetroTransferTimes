@@ -30,6 +30,7 @@ export function calculateTransfer(values) {
     if (!Number.isFinite(value) || value < 0) throw new RangeError(`${key} must be a nonnegative number`);
     return total + value / speed;
   }, 0);
+  if (!Number.isFinite(seconds)) throw new RangeError('The total transfer time must be finite');
   const wholeSeconds = Math.round(seconds);
   return {
     seconds,
