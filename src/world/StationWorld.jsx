@@ -58,32 +58,37 @@ function SceneCamera({ layout }) {
   return <OrbitControls ref={controls} makeDefault enablePan={false} enableDamping dampingFactor={.085} minPolarAngle={.48} maxPolarAngle={1.34} minAzimuthAngle={-.25} maxAzimuthAngle={1.8} rotateSpeed={.48} zoomSpeed={.7} />;
 }
 
-function Tracks() {
+function Tracks({ endX }) {
+  const startX = -d.trackHalfLength;
+  const length = endX - startX;
+  const mid = (startX + endX) / 2;
+  const sleepers = Math.ceil(length / .47);
   return <group userData={{ collisionRole: 'track' }}>
-    <FloorSlab position={[0, -.56, d.trackZ]} size={[18.8, 2.4, .3]} color="#65706c" sideColor="#77786d" />
-    {Array.from({ length: 40 }, (_, i) => <Block key={i} position={[-9.15 + i * .47, -.51, d.trackZ]} size={[.13, .09, 1.7]} color="#505b58" />)}
-    {[-.52, .52].map(offset => <Block key={offset} position={[0, -.43, d.trackZ + offset]} size={[18.8, .1, .11]} color="#bac4bc" />)}
+    <FloorSlab position={[mid, -.56, d.trackZ]} size={[length, 2.4, .3]} color="#65706c" sideColor="#77786d" />
+    {Array.from({ length: sleepers }, (_, i) => <Block key={i} position={[startX + (i + .5) * length / sleepers, -.51, d.trackZ]} size={[.13, .09, 1.7]} color="#505b58" />)}
+    {[-.52, .52].map(offset => <Block key={offset} position={[mid, -.43, d.trackZ + offset]} size={[length, .1, .11]} color="#bac4bc" />)}
   </group>;
 }
 
-function RailTunnel({ side }) {
-  const center = side * 8.5;
+function RailTunnel({ side, endX = d.trackHalfLength }) {
+  const length = endX - 7.6;
+  const center = side * (7.6 + length / 2);
   return <group>
     {/* A hollow sleeve hides the clipping boundary deep inside the opening. */}
-    {[-1, 1].map(edge => <Block key={edge} position={[center, (d.portalCeiling - .5) / 2, d.trackZ + edge * (d.portalInnerHalfWidth + .12)]} size={[1.8, d.portalCeiling + .5, .24]} color="#ab947c" />)}
-    <Block position={[center, d.portalCeiling + .14, d.trackZ]} size={[1.8, .28, 2.64]} color="#bfa78a" />
+    {[-1, 1].map(edge => <Block key={edge} position={[center, (d.portalCeiling - .5) / 2, d.trackZ + edge * (d.portalInnerHalfWidth + .12)]} size={[length, d.portalCeiling + .5, .24]} color="#ab947c" />)}
+    <Block position={[center, d.portalCeiling + .14, d.trackZ]} size={[length, .28, 2.64]} color="#bfa78a" />
     <Block position={[side * 7.62, 2.06, d.trackZ]} size={[.19, .36, 2.8]} color="#d0b99a" />
   </group>;
 }
 
-const Platform = memo(function Platform({ position, rotation = 0, line, reducedMotion, phaseOffset, upper = false }) {
+const Platform = memo(function Platform({ position, rotation = 0, line, reducedMotion, phaseOffset, upper = false, trackEndX = d.trackHalfLength }) {
   const color = lineColor(line);
   return <group name={upper ? 'upper-platform' : 'lower-platform'} position={position} rotation={[0, rotation, 0]}>
     <Block position={[0, .95, -3.48]} size={[15.3, 3.0, .2]} color="#e9dcc3" />
     <Block position={[0, .55, -3.369]} size={[15.2, .12, .022]} color={color} castShadow={false} />
     <Block position={[0, 2.46, -3.43]} size={[15.5, .16, .36]} color="#c6ae90" />
     {[-4.5, 4.5].map(x => <Sign key={x} position={[x, 1.99, -3.335]} size={[1.04, .5]} text={line} background={color} foreground={colors.warmWhite} frame={color} />)}
-    <Tracks />
+    <Tracks endX={trackEndX} />
     <FloorSlab position={[0, 0, 0]} size={[14.6, 2.36, d.platformThickness]} color="#f0e0c1" sideColor="#bca58b" />
     <Block position={[0, .012, -1.03]} size={[14.55, .024, .19]} color="#edc978" castShadow={false} />
     {Array.from({ length: 30 }, (_, i) => <Block key={i} position={[-7.1 + i * .49, .029, -1.03]} size={[.12, .01, .07]} color="#fff2ca" castShadow={false} />)}
@@ -95,7 +100,7 @@ const Platform = memo(function Platform({ position, rotation = 0, line, reducedM
     <Planter position={[upper ? 6.45 : -6.4, .01, .55]} width={.64} />
     <Traveller position={[upper ? 3.3 : -6.7, .01, -.45]} shirt="#b57664" phase={1.1} reducedMotion={reducedMotion} />
     <Traveller position={[upper ? 5.8 : 5.6, .01, -.25]} shirt="#7b998a" phase={2.6} reducedMotion={reducedMotion} />
-    <RailTunnel side={-1} /><RailTunnel side={1} />
+    <RailTunnel side={-1} /><RailTunnel side={1} endX={trackEndX} />
     <Train position={[0, -.36, d.trackZ]} line={line} stripe={color} phaseOffset={phaseOffset} reducedMotion={reducedMotion} />
   </group>;
 });
@@ -132,7 +137,7 @@ const TransferTunnel = memo(function TransferTunnel({ layout: l, fromLine, toLin
         <Block position={[x, l.tunnelY + 1.94, l.tunnelZ]} size={[.22, .07, .47]} color="#fff0cb" castShadow={false} />
       </group>;
     })}
-    {signWall[1] - signWall[0] > 1 && <Sign position={[(signWall[0] + signWall[1]) / 2, l.tunnelY + 1.29, l.tunnelNearZ + .035]} size={[Math.min(2.5, signWall[1] - signWall[0] - .16), .43]} text={`${fromLine}  →  ${toLine}  ·  ENLLAÇ`} background={colors.tealDark} foreground={colors.warmWhite} frame={colors.tealDark} />}
+    {signWall[1] - signWall[0] > 1 && <Sign position={[(signWall[0] + signWall[1]) / 2, l.tunnelY + 1.29, l.tunnelNearZ + .035]} size={[Math.min(2.5, signWall[1] - signWall[0] - .16), .43]} text={`${fromLine}  →  ${toLine}`} background={colors.tealDark} foreground={colors.warmWhite} frame={colors.tealDark} />}
     {l.hasWalkway && <MovingWalkway position={[l.walkwayX, l.tunnelY, l.tunnelZ]} length={l.walkwayVisualLength} reducedMotion={reducedMotion} />}
     <Staircase x={l.stairX} {...l.upperDescent} width={1.4} steps={Math.ceil(l.escalatorRun / .24)} />
     <Escalator x={l.escalatorX} {...l.upperDescent} treadCount={l.escalatorTreads} reducedMotion={reducedMotion} />
@@ -186,7 +191,7 @@ export default function StationWorld({ values, station, journey, journeyRun, red
     <group>
       <CutawayEarth layout={layout} />
       <BarcelonaStreet layout={layout} stationName={stationLabel(station.name)} reducedMotion={reducedMotion} />
-      <Platform position={[layout.upperX, layout.upperY, layout.upperZ]} line={station.fromLine} reducedMotion={reducedMotion} phaseOffset={6} upper />
+      <Platform position={[layout.upperX, layout.upperY, layout.upperZ]} line={station.fromLine} reducedMotion={reducedMotion} phaseOffset={6} trackEndX={layout.upperTrackEndX} upper />
       <TransferTunnel layout={layout} fromLine={station.fromLine} toLine={station.toLine} reducedMotion={reducedMotion} />
       <Platform position={[layout.lowerX, layout.lowerY, layout.lowerZ]} rotation={Math.PI / 2} line={station.toLine} reducedMotion={reducedMotion} phaseOffset={0} />
       <PeopleFlow layout={layout} reducedMotion={reducedMotion} />

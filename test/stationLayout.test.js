@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { getStationLayout, stationDimensions as d, volumesIntersect } from '../src/world/stationLayout.js';
 import { defaultJourney, emptyJourney } from '../src/calculator.js';
 import { getStationPaths, samplePath } from '../src/world/journeyPaths.js';
+import { trainBoardingEnd } from '../src/world/trainSchedule.js';
 
 const scenarios = [];
 for (const walkDistance of ['0', '200', '1000', '1000000000'])
@@ -15,11 +16,12 @@ test('tunnel, escalator, and stairs grow physically and approach finite limits',
   const zero = getStationLayout(emptyJourney);
   const normal = getStationLayout(defaultJourney);
   const huge = getStationLayout({ walkDistance: '1e12', escalatorDistance: '1e12', stairDistance: '1e12', walkwayLength: '1e12' });
-  assert.ok(normal.corridorLength > zero.corridorLength + 3);
+  assert.ok(zero.corridorLength >= 14);
+  assert.ok(normal.corridorLength > zero.corridorLength + 8);
   assert.ok(normal.escalatorRun > zero.escalatorRun + 1.5);
   assert.ok(normal.stairRun > zero.stairRun + 1);
   assert.ok(normal.lowerY < zero.lowerY - .8);
-  assert.ok(huge.corridorLength < 13 && huge.escalatorRun < 7 && huge.stairRun < 8);
+  assert.ok(huge.corridorLength < 29 && huge.escalatorRun < 7 && huge.stairRun < 8);
   const riseEarly = getStationLayout({ escalatorDistance: '100' }).escalatorRun - zero.escalatorRun;
   const riseLate = getStationLayout({ escalatorDistance: '200' }).escalatorRun - getStationLayout({ escalatorDistance: '100' }).escalatorRun;
   assert.ok(riseLate < riseEarly / 4);
@@ -33,7 +35,7 @@ test('train clearances, landings, and orthogonal track crossing survive 256 inpu
     assert.equal(volumesIntersect(...l.trainEnvelopes), false);
     assert.ok(l.tunnelY - .32 - (l.lowerY + d.trainTop) >= 1.1);
     const lowerRailX = l.lowerX + d.trackZ;
-    assert.ok(lowerRailX > l.upperX - d.trackHalfLength && lowerRailX < l.upperX + d.trackHalfLength);
+    assert.ok(lowerRailX > l.upperX - d.trackHalfLength && lowerRailX < l.upperX + l.upperTrackEndX);
     assert.ok(d.trackZ > l.lowerZ - d.trackHalfLength && d.trackZ < l.lowerZ + d.trackHalfLength);
     assert.equal(l.upperDescent.topY, l.upperY);
     assert.equal(l.upperDescent.bottomY, l.tunnelY);
@@ -75,8 +77,8 @@ test('commuter routes stay off the tracks except while boarding and reach open d
   for (const values of scenarios) {
     const l = getStationLayout(values), paths = getStationPaths(l);
     assert.ok(paths.lowerDoorZ < l.lowerStairBottomZ - .25);
-    assert.ok(paths.transfer.duration + 3.5 < 30);
-    assert.ok(paths.entry.duration + 2 + 6 < 30);
+    assert.ok(paths.transfer.duration + 3.5 < trainBoardingEnd);
+    assert.ok(paths.entry.duration + 2 + 6 < trainBoardingEnd);
     for (const path of [paths.transfer, paths.entry, paths.exit, paths.reverse]) {
       for (const segment of path.segments) {
         if (segment.mode === 'boarding') continue;

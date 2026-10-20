@@ -72,8 +72,8 @@ function PavementOpening({ layout, stationName }) {
     <StaircaseAlongX topX={l.entranceTopX} bottomX={l.entranceBottomX} yTop={l.streetY} yBottom={l.upperY} z={l.entranceZ} width={1.7} steps={26} />
     <Block position={[l.entranceTopX - .17, l.streetY + .75, 1.32]} size={[.1, 1.5, .1]} color={colors.metal} />
     <Sign position={[l.entranceTopX - .17, l.streetY + 1.6, 1.35]} size={[.64, .64]} text="M" background={colors.coral} foreground={colors.warmWhite} frame={colors.coral} />
-    {[-1, 1].map(side => <Rod key={side} from={[x + side, l.streetY + .2, 1.31]} to={[x + side, l.streetY + .53, 1.31]} radius={.035} color={colors.tealDark} />)}
-    <Sign position={[x, l.streetY + .54, 1.35]} size={[2.5, .34]} text={stationName} background={colors.cream} foreground={colors.tealDark} frame={colors.tealDark} />
+    {[-1, 1].map(side => <Rod key={side} from={[x + side * 1.5, l.streetY + .2, 1.31]} to={[x + side * 1.5, l.streetY + .7, 1.31]} radius={.035} color={colors.tealDark} />)}
+    <Sign position={[x, l.streetY + .72, 1.35]} size={[4, .65]} text={stationName} background={colors.cream} foreground={colors.tealDark} frame={colors.tealDark} />
     <Turnstiles position={[l.entranceBottomX + .72, l.upperY, l.entranceZ]} rotation={[0, Math.PI / 2, 0]} />
   </group>;
 }
@@ -98,6 +98,11 @@ export default function BarcelonaStreet({ layout, stationName, reducedMotion }) 
     <Building position={[layout.upperX - 5.95, 3.58, -5.35]} width={2.9} depth={2.05} height={3.2} color="#e3c8a6" roof="#b7765c" flat />
     <CasaFacade x={layout.upperX - 1.82} />
     <Building position={[layout.upperX + 2.85, 3.58, -5.35]} width={3.1} depth={2.1} height={3.45} color="#e9dcbf" roof="#8ca08a" flat />
+    {Array.from({ length: Math.max(0, Math.floor((layout.lowerX - 1.2 - (layout.upperX + 6.6)) / 4.4) + 1) }, (_, i) => <Building
+      key={`street-${i}`} position={[layout.upperX + 6.6 + i * 4.4, 3.58, -5.35]}
+      width={2.75} depth={2.05} height={[2.8, 3.1, 2.65][i % 3]}
+      color={i % 2 ? '#e6d6b8' : '#e5c8a4'} roof={i % 2 ? '#8ca08a' : '#bc856b'} flat
+    />)}
     <Building position={[layout.lowerX + 2.08, 3.58, -5.35]} width={3.3} depth={2.05} height={3.1} color="#e5cfb1" roof="#b7795e" flat />
     <LowPolyTree position={[layout.upperX + 5.08, 3.58, -3.52]} scale={.7} />
     <LowPolyTree position={[layout.lowerX - 1.55, 3.58, -3.5]} hue="#7f9878" scale={.7} />

@@ -27,7 +27,10 @@ export function getStationLayout(values = defaultJourney) {
   const upperX = -3.2;
   const upperY = 0;
   const upperZ = 0;
-  const lowerX = 2.6 + 5.5 * compressed(walking + walkway, 260);
+  const lowerX = 9.5 + 14 * compressed(walking + walkway, 260);
+  // Keep the upper railway continuous above the more distant lower line.
+  // Its enclosed extension also hides departing trains inside the tunnel.
+  const upperTrackEndX = lowerX + stationDimensions.trackZ + 2 - upperX;
   const lowerZ = 1;
   const escalatorRun = 2.9 + 3.8 * compressed(escalator, 45);
   const escalatorRise = 1.65 + 1.15 * compressed(escalator, 45);
@@ -62,7 +65,7 @@ export function getStationLayout(values = defaultJourney) {
 
   const d = stationDimensions;
   const trainEnvelopes = [
-    box('upper train', [upperX - d.trackHalfLength, upperX + d.trackHalfLength], [upperY + d.trainBottom, upperY + d.trainTop], [d.trackZ - d.trainHalfWidth, d.trackZ + d.trainHalfWidth]),
+    box('upper train', [upperX - d.trackHalfLength, upperX + upperTrackEndX], [upperY + d.trainBottom, upperY + d.trainTop], [d.trackZ - d.trainHalfWidth, d.trackZ + d.trainHalfWidth]),
     box('lower train', [lowerX + d.trackZ - d.trainHalfWidth, lowerX + d.trackZ + d.trainHalfWidth], [lowerY + d.trainBottom, lowerY + d.trainTop], [lowerZ - d.trackHalfLength, lowerZ + d.trackHalfLength]),
   ];
   const walkingVolumes = [
@@ -76,7 +79,7 @@ export function getStationLayout(values = defaultJourney) {
 
   return {
     walking, walkway, escalator, stairs,
-    upperX, upperY, upperZ, lowerX, lowerY, lowerZ,
+    upperX, upperY, upperZ, upperTrackEndX, lowerX, lowerY, lowerZ,
     upperConnectionX, stairX, escalatorX, escalatorRun, escalatorRise, stairRun, stairRise,
     tunnelY, tunnelZ, tunnelNearZ, tunnelFarZ, tunnelStartX, tunnelEndX, corridorLength,
     lowerStairBottomZ, upperDescent, lowerDescent,
