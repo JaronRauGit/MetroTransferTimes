@@ -16,5 +16,5 @@ export function lineColor(line) {
 }
 
 export function stationLabel(name) {
-  return (name.trim() || 'Verdaguer').slice(0, 32).toLocaleUpperCase('ca-ES');
+  return (name.trim() || 'Custom station').slice(0, 32).toLocaleUpperCase('ca-ES');
 }

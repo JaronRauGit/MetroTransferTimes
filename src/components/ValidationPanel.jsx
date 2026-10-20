@@ -19,7 +19,7 @@ export default function ValidationPanel({ values, station, validation, onStart }
       <span className="section-eyebrow">TAKE THE MINIATURE WITH YOU</span>
       <h2>Validate while there</h2>
       <p>Press Start when you begin your transfer. The red marker follows the full estimate, second for second.</p>
-      <div className="validation-route"><LineBadge line={station.fromLine} /><span aria-hidden="true">→</span><LineBadge line={station.toLine} /><strong>{station.name.trim() || 'Verdaguer'}</strong></div>
+      <div className="validation-route"><LineBadge line={station.fromLine} /><span aria-hidden="true">→</span><LineBadge line={station.toLine} /><strong>{station.name.trim() || 'Custom station'}</strong></div>
       <small>Changing a distance or station resets the run.</small>
     </div>
     <div className={`validation-clock${arrived ? ' is-arrived' : ''}`}>

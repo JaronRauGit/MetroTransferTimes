@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { calculateTransfer, emptyJourney, presets } from '../calculator.js';
-import { stationPresets } from '../stationPresets.js';
+import { calculateTransfer, emptyJourney } from '../calculator.js';
+import { getStationPreset, stationPresets } from '../stationPresets.js';
 import LineSelect from './LineSelect.jsx';
 import PresetLibrary from './PresetLibrary.jsx';
+import PlatformSelect from './PlatformSelect.jsx';
 import ValidationPanel from './ValidationPanel.jsx';
 
 const fields = [
-  { id: 'walkDistance', label: 'Tunnel walk', unit: 'm', glyph: '→' },
-  { id: 'escalatorDistance', label: 'Escalator', unit: 'm', glyph: '↗' },
-  { id: 'stairDistance', label: 'Stairs', unit: 'm', glyph: '▤' },
-  { id: 'walkwayLength', label: 'Moving walkway', unit: 'm', glyph: '⇢' },
+  { id: 'walkDistance', label: 'Walking distance', unit: 'm', glyph: '→', hint: 'Exclude the moving walkway', step: 'any' },
+  { id: 'escalatorDistance', label: 'Escalator', unit: 'steps', glyph: '↗', hint: 'Count the stairs next to it', step: '1' },
+  { id: 'numSteps', label: 'Stairs', unit: 'steps', glyph: '▤', hint: 'Only where there is no escalator', step: '1' },
+  { id: 'walkwayLength', label: 'Moving walkway', unit: 'm', glyph: '⇢', hint: 'Separate from walking distance', step: 'any' },
 ];
 
 export default function CalculatorPanel({ values, station, onValuesChange, onStationChange, validation }) {
@@ -17,10 +18,8 @@ export default function CalculatorPanel({ values, station, onValuesChange, onSta
   const [formError, setFormError] = useState('');
   const [tab, setTab] = useState('calculator');
   const tabs = [{ id: 'calculator', label: 'Calculator' }, { id: 'presets', label: 'Presets' }, { id: 'validation', label: 'Validate while there' }];
-  const selectedPreset = stationPresets.find(preset =>
-    Object.entries(preset.station).every(([key, value]) => station[key] === value)
-    && Object.entries(preset.values).every(([key, value]) => Number(values[key]) === Number(value)),
-  )?.id ?? '';
+  const originalRoute = station.presetId ? getStationPreset(station.presetId, station.fromPlatform, station.toPlatform) : null;
+  const selectedPreset = originalRoute && Object.entries(originalRoute.values).every(([key, value]) => Number(values[key]) === Number(value)) ? originalRoute.id : '';
 
   function calculate(nextValues) {
     try {
@@ -28,7 +27,7 @@ export default function CalculatorPanel({ values, station, onValuesChange, onSta
       setFormError('');
     } catch {
       setResult(null);
-      setFormError('Please enter smaller, finite distances.');
+      setFormError('Please enter smaller, finite distances and step counts.');
     }
   }
 
@@ -44,26 +43,19 @@ export default function CalculatorPanel({ values, station, onValuesChange, onSta
   }
 
   function updateStation(id, value) {
-    onStationChange(current => ({ ...current, [id]: value }));
+    onStationChange(current => ({ ...current, [id]: value, presetId: null, fromPlatform: null, toPlatform: null }));
   }
 
-  function usePreset(name) {
-    const nextValues = { ...presets[name] };
-    onValuesChange(nextValues);
-    calculate(nextValues);
-    setTab('calculator');
-    requestAnimationFrame(() => document.getElementById('dock-tab-calculator')?.focus({ preventScroll: true }));
-  }
-
-  function loadStation(id) {
-    const preset = stationPresets.find(item => item.id === id);
-    if (!preset) return;
+  function loadStation(id, from, to, returnToCalculator = true) {
+    const preset = getStationPreset(id, from, to);
     const nextValues = { ...preset.values };
     onStationChange({ ...preset.station });
     onValuesChange(nextValues);
     calculate(nextValues);
-    setTab('calculator');
-    requestAnimationFrame(() => document.getElementById('dock-tab-calculator')?.focus({ preventScroll: true }));
+    if (returnToCalculator) {
+      setTab('calculator');
+      requestAnimationFrame(() => document.getElementById('dock-tab-calculator')?.focus({ preventScroll: true }));
+    }
   }
 
   function reset() {
@@ -82,16 +74,21 @@ export default function CalculatorPanel({ values, station, onValuesChange, onSta
         if (event.key === 'Home') next = 0;
         if (event.key === 'End') next = tabs.length - 1;
         if (next !== undefined) { event.preventDefault(); setTab(tabs[next].id); document.getElementById(`dock-tab-${tabs[next].id}`).focus(); }
-      }}>{item.id === 'validation' && <span className={`validation-tab-dot${validation.run?.status === 'running' ? ' is-running' : ''}`} aria-hidden="true" />}{item.label}{item.id === 'presets' && <span className="tab-count">4</span>}{item.id === 'validation' && validation.run?.status === 'running' && <span className="sr-only">, running</span>}</button>)}
+      }}>{item.id === 'validation' && <span className={`validation-tab-dot${validation.run?.status === 'running' ? ' is-running' : ''}`} aria-hidden="true" />}{item.label}{item.id === 'presets' && <span className="tab-count">{stationPresets.length}</span>}{item.id === 'validation' && validation.run?.status === 'running' && <span className="sr-only">, running</span>}</button>)}
     </div>
     <div id={`dock-panel-${tab}`} role="tabpanel" aria-labelledby={`dock-tab-${tab}`}>
-    {tab === 'presets' && <PresetLibrary selected={selectedPreset} onLoadStation={loadStation} onLoadTemplate={usePreset} />}
+    {tab === 'presets' && <PresetLibrary selected={selectedPreset} station={station} onLoadStation={loadStation} />}
     {tab === 'validation' && <ValidationPanel values={values} station={station} validation={validation} onStart={() => { calculate(values); validation.start(values, station); }} />}
     {tab === 'calculator' && <>
+    {originalRoute && <div className="loaded-route">
+      <div><strong>{selectedPreset ? 'Original measurements' : 'Custom values'}</strong><small>Choose platforms to reload the measured route.</small></div>
+      <PlatformSelect id="startPlatform" label="Start platform" value={station.fromPlatform} onChange={value => loadStation(station.presetId, value, station.toPlatform, false)} />
+      <PlatformSelect id="destinationPlatform" label="Destination platform" value={station.toPlatform} onChange={value => loadStation(station.presetId, station.fromPlatform, value, false)} />
+    </div>}
     <div className="dock-inner">
       <div className="dock-identity">
         <div className="dock-kicker"><span className="kicker-light" /> THE STATION</div>
-        <label className="station-field" htmlFor="stationName"><span>Station name</span><input id="stationName" type="text" maxLength="32" value={station.name} onChange={event => updateStation('name', event.target.value)} placeholder="Verdaguer" /></label>
+        <label className="station-field" htmlFor="stationName"><span>Station name</span><input id="stationName" type="text" maxLength="32" value={station.name} onChange={event => updateStation('name', event.target.value)} placeholder="Custom station" /></label>
         <div className="line-selectors">
           <LineSelect id="fromLine" label="From" value={station.fromLine} onChange={value => updateStation('fromLine', value)} />
           <span className="line-arrow" aria-hidden="true">→</span>
@@ -104,7 +101,8 @@ export default function CalculatorPanel({ values, station, onValuesChange, onSta
           <div className="fields">
             {fields.map(field => <label className="field" htmlFor={field.id} key={field.id}>
               <span className="field-name"><span className="field-glyph" aria-hidden="true">{field.glyph}</span>{field.label}</span>
-              <span className="field-control"><input id={field.id} name={field.id} type="number" min="0" step="any" inputMode="decimal" placeholder="0" value={values[field.id]} onChange={event => update(field.id, event.target.value)} /><span>{field.unit}</span></span>
+              <span className="field-control"><input id={field.id} name={field.id} type="number" min="0" step={field.step} inputMode={field.step === '1' ? 'numeric' : 'decimal'} aria-describedby={`${field.id}-hint`} placeholder="0" value={values[field.id]} onChange={event => update(field.id, event.target.value)} /><span>{field.unit}</span></span>
+              <small className="field-hint" id={`${field.id}-hint`}>{field.hint}</small>
             </label>)}
           </div>
           {formError && <p className="form-error" role="alert">{formError}</p>}
@@ -121,7 +119,7 @@ export default function CalculatorPanel({ values, station, onValuesChange, onSta
         <button className="validate-link" type="button" onClick={() => setTab('validation')}>At the station? Validate this time <span aria-hidden="true">↗</span></button>
       </div>
     </div>
-    <details className="method"><summary>How is the time estimated?</summary><p>All lengths are in metres. Walking: 1.3 m/s · standing on an escalator: 0.5 m/s · stairs: 0.65 m/s · walking on a moving walkway: 1.8 m/s (1.3 walking + 0.5 belt). We add the four segment times. The miniature uses a compressed scale.</p></details>
+    <details className="method"><summary>How is the time estimated?</summary><p>Walking and moving walkways are measured in metres. Escalators are counted using the steps of the stairs beside them; stairs without an escalator are entered separately in steps. Keep moving-walkway length out of walking distance. Original model: walking 1.3 m/s · escalator 1.5 steps/s · stairs 1.9 steps/s · moving walkway 0.5 m/s. We add the four segment times. The miniature uses a compressed scale.</p></details>
     </>}
     </div>
   </section>;

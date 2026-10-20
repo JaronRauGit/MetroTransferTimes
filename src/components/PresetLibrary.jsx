@@ -1,23 +1,34 @@
-import { calculateTransfer, presets } from '../calculator.js';
-import { stationPresets } from '../stationPresets.js';
-import { LineBadge } from './LineSelect.jsx';
+import { useState } from 'react';
+import { calculateTransfer } from '../calculator.js';
+import { getStationPreset, measurementSource, stationPresets } from '../stationPresets.js';
+import PlatformSelect from './PlatformSelect.jsx';
 
-const orderedStations = [...stationPresets].sort((a, b) => a.station.name.localeCompare(b.station.name, 'ca'));
+const orderedStations = [...stationPresets].sort((a, b) => a.name.localeCompare(b.name, 'ca'));
 
-export default function PresetLibrary({ selected, onLoadStation, onLoadTemplate }) {
-  return <div className="preset-library">
-    <div className="library-heading"><div><h2>Start with a station</h2><p>Illustrative lengths. Load an example, then make it your own.</p></div><span className="library-count">04 STATIONS</span></div>
-    <div className="preset-list" role="group" aria-label="Station presets">
-      {orderedStations.map((preset, index) => <button key={preset.id} type="button" className={`preset-card${selected === preset.id ? ' is-selected' : ''}`} aria-label={`Load ${preset.station.name}, ${preset.station.fromLine} to ${preset.station.toLine}`} aria-pressed={selected === preset.id} onClick={() => onLoadStation(preset.id)}>
-        <span className="preset-card-top"><span className="preset-number">0{index + 1}</span><span className="preset-lines"><LineBadge line={preset.station.fromLine} /><span aria-hidden="true">→</span><LineBadge line={preset.station.toLine} /></span></span>
-        <span className="preset-name">{preset.station.name}</span>
-        <span className="preset-distances">{preset.values.walkDistance} m tunnel · {preset.values.escalatorDistance} m escalator</span>
-        <span className="preset-card-bottom"><strong>{calculateTransfer(preset.values).label}</strong><span>Load route <span aria-hidden="true">↗</span></span></span>
-      </button>)}
+function StationCard({ station, selected, currentStation, index, onLoadStation }) {
+  const current = currentStation.presetId === station.id;
+  const [from, setFrom] = useState(current ? currentStation.fromPlatform : 'l3_trinitat');
+  const [to, setTo] = useState(current ? currentStation.toPlatform : 'l5_cornelia');
+  const route = getStationPreset(station.id, from, to);
+  const active = selected === station.id && currentStation.fromPlatform === from && currentStation.toPlatform === to;
+  return <article className={`preset-card${active ? ' is-selected' : ''}`}>
+    <div className="preset-card-top"><span className="preset-number">0{index + 1}</span><span className="measurement-badge">ORIGINAL MEASUREMENTS</span></div>
+    <h3 className="preset-name">{station.name}</h3>
+    <div className="preset-platforms">
+      <PlatformSelect id={`${station.id}-from`} label="Start platform" value={from} onChange={setFrom} />
+      <PlatformSelect id={`${station.id}-to`} label="Destination platform" value={to} onChange={setTo} />
     </div>
-    <div className="route-templates"><div><h3>Route templates</h3><p>Keep your current station and lines.</p></div><div className="template-buttons">
-      <button type="button" onClick={() => onLoadTemplate('quick')}><span>Short change</span><small>{calculateTransfer(presets.quick).label}</small><span aria-hidden="true">↗</span></button>
-      <button type="button" onClick={() => onLoadTemplate('long')}><span>Long connection</span><small>{calculateTransfer(presets.long).label}</small><span aria-hidden="true">↗</span></button>
-    </div></div>
+    <p className="preset-distances">{route.values.walkDistance} m walking · {route.values.escalatorDistance} escalator steps · {route.values.walkwayLength} m moving walkway</p>
+    <div className="preset-card-bottom"><strong>{calculateTransfer(route.values).label}</strong><button type="button" className="load-station-button" onClick={() => onLoadStation(station.id, from, to)} aria-label={`Load ${station.name} route`}>Load route <span aria-hidden="true">↗</span></button></div>
+  </article>;
+}
+
+export default function PresetLibrary({ selected, station, onLoadStation }) {
+  return <div className="preset-library">
+    <div className="library-heading"><div><h2>Measured station routes</h2><p>Choose your start and destination platforms to load the original measurements.</p></div><span className="library-count">{stationPresets.length} STATIONS</span></div>
+    <div className="preset-list" role="group" aria-label="Station presets">
+      {orderedStations.map((preset, index) => <StationCard key={preset.id} station={preset} currentStation={station} selected={selected} index={index} onLoadStation={onLoadStation} />)}
+    </div>
+    <p className="measurement-source">Sants Estació and Diagonal are the only stations with confirmed measurements. <a href={measurementSource} target="_blank" rel="noreferrer">Original data ↗</a></p>
   </div>;
 }

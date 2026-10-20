@@ -1,28 +1,20 @@
+import { defaultStationPreset } from './stationPresets.js';
+
 export const speeds = Object.freeze({
   walkDistance: 1.3,
-  escalatorDistance: 0.5,
-  stairDistance: 0.65,
-  walkwayLength: 1.8,
+  escalatorDistance: 1.5,
+  numSteps: 1.9,
+  walkwayLength: 0.5,
 });
 
 export const emptyJourney = Object.freeze({
   walkDistance: '',
   escalatorDistance: '',
-  stairDistance: '',
+  numSteps: '',
   walkwayLength: '',
 });
 
-export const defaultJourney = Object.freeze({
-  walkDistance: '200',
-  escalatorDistance: '30',
-  stairDistance: '12',
-  walkwayLength: '35',
-});
-
-export const presets = Object.freeze({
-  quick: { walkDistance: '65', escalatorDistance: '0', stairDistance: '4', walkwayLength: '0' },
-  long: { ...defaultJourney },
-});
+export const defaultJourney = Object.freeze({ ...defaultStationPreset.values });
 
 export function calculateTransfer(values) {
   const seconds = Object.entries(speeds).reduce((total, [key, speed]) => {

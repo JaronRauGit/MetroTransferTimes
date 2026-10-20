@@ -21,7 +21,7 @@ test('validation uses elapsed wall time and finishes once at the exact deadline,
 test('the validation route gives each transport mode its full calculated time, without train waits or boarding', () => {
   const path = createValidationPath(getStationLayout(defaultJourney), defaultJourney);
   nearly(path.segments.reduce((sum, segment) => sum + segment.duration, 0), calculateTransfer(defaultJourney).seconds);
-  for (const [mode, key] of Object.entries({ walk: 'walkDistance', escalator: 'escalatorDistance', stairs: 'stairDistance', walkway: 'walkwayLength' })) {
+  for (const [mode, key] of Object.entries({ walk: 'walkDistance', escalator: 'escalatorDistance', stairs: 'numSteps', walkway: 'walkwayLength' })) {
     nearly(path.segments.filter(segment => segment.mode === mode).reduce((sum, segment) => sum + segment.duration, 0), Number(defaultJourney[key]) / speeds[key]);
   }
   assert.ok(path.segments.every(segment => segment.duration > 0 && !['wait', 'boarding'].includes(segment.mode)));
@@ -47,7 +47,7 @@ test('zero-length sections are instantaneous and all route samples stay finite',
 });
 
 test('size transitions retain clear train envelopes and connected landings at every intermediate shape', () => {
-  const examples = [emptyJourney, defaultJourney, { walkDistance: '1e12', escalatorDistance: '1e12', stairDistance: '1e12', walkwayLength: '1e12' }, { walkDistance: '1000', escalatorDistance: '0', stairDistance: '1000', walkwayLength: '0' }];
+  const examples = [emptyJourney, defaultJourney, { walkDistance: '1e12', escalatorDistance: '1e12', numSteps: '1e12', walkwayLength: '1e12' }, { walkDistance: '1000', escalatorDistance: '0', numSteps: '1000', walkwayLength: '0' }];
   for (const from of examples) for (const to of examples) for (const t of [0, .1, .25, .5, .75, .9, 1]) {
     const shape = interpolateStationShape(getStationShape(from), getStationShape(to), t);
     const l = getStationLayout(to, shape);

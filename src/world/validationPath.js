@@ -1,7 +1,7 @@
 import { calculateTransfer, speeds } from '../calculator.js';
 import { getStationPaths, compilePath, samplePath } from './journeyPaths.js';
 
-const inputForMode = { walk: 'walkDistance', escalator: 'escalatorDistance', stairs: 'stairDistance', walkway: 'walkwayLength' };
+const inputForMode = { walk: 'walkDistance', escalator: 'escalatorDistance', stairs: 'numSteps', walkway: 'walkwayLength' };
 export const validationStageNames = { walk: 'Tunnel & platform walk', escalator: 'Escalator', stairs: 'Stairs', walkway: 'Moving walkway' };
 
 // Include the whole platform-to-platform route, without train boarding or

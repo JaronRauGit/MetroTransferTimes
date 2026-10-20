@@ -1,21 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getStationLayout, stationDimensions as d, volumesIntersect } from '../src/world/stationLayout.js';
-import { defaultJourney, emptyJourney } from '../src/calculator.js';
+import { emptyJourney } from '../src/calculator.js';
 import { getStationPaths, samplePath } from '../src/world/journeyPaths.js';
 import { trainBoardingEnd } from '../src/world/trainSchedule.js';
 
 const scenarios = [];
 for (const walkDistance of ['0', '200', '1000', '1000000000'])
   for (const escalatorDistance of ['0', '30', '1000', '1000000000'])
-    for (const stairDistance of ['0', '12', '1000', '1000000000'])
+    for (const numSteps of ['0', '12', '1000', '1000000000'])
       for (const walkwayLength of ['0', '35', '1000', '1000000000'])
-        scenarios.push({ walkDistance, escalatorDistance, stairDistance, walkwayLength });
+        scenarios.push({ walkDistance, escalatorDistance, numSteps, walkwayLength });
 
 test('tunnel, escalator, and stairs grow physically and approach finite limits', () => {
   const zero = getStationLayout(emptyJourney);
-  const normal = getStationLayout(defaultJourney);
-  const huge = getStationLayout({ walkDistance: '1e12', escalatorDistance: '1e12', stairDistance: '1e12', walkwayLength: '1e12' });
+  const normal = getStationLayout({ walkDistance: '200', escalatorDistance: '30', numSteps: '12', walkwayLength: '35' });
+  const huge = getStationLayout({ walkDistance: '1e12', escalatorDistance: '1e12', numSteps: '1e12', walkwayLength: '1e12' });
   assert.ok(zero.corridorLength >= 14);
   assert.ok(normal.corridorLength > zero.corridorLength + 8);
   assert.ok(normal.escalatorRun > zero.escalatorRun + 1.5);

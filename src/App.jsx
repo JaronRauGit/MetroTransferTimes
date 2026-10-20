@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import StationWorld from './world/StationWorld.jsx';
 import CalculatorPanel from './components/CalculatorPanel.jsx';
 import { defaultJourney } from './calculator.js';
+import { defaultStationPreset } from './stationPresets.js';
 import useValidation from './useValidation.js';
 
 function useReducedMotion() {
@@ -18,7 +19,7 @@ function useReducedMotion() {
 
 export default function App() {
   const [values, setValues] = useState({ ...defaultJourney });
-  const [station, setStation] = useState({ name: 'Verdaguer', fromLine: 'L4', toLine: 'L5' });
+  const [station, setStation] = useState({ ...defaultStationPreset.station });
   const validation = useValidation();
   const [sceneFailed, setSceneFailed] = useState(false);
   const reducedMotion = useReducedMotion();
@@ -31,7 +32,7 @@ export default function App() {
       {sceneFailed && <p className="scene-fallback">The 3D station could not start in this browser. The calculator is still available below.</p>}
       <header className="scene-header">
         <div className="wordmark"><span className="wordmark-symbol">M</span><div><strong>between<span>/</span>the lines</strong><small>BARCELONA METRO MINIATURE</small></div></div>
-        <div className="station-status"><span className="status-light" /><span>{station.name.trim() || 'Verdaguer'}</span><b>{station.fromLine} <i>→</i> {station.toLine}</b></div>
+        <div className="station-status"><span className="status-light" /><span>{station.name.trim() || 'Custom station'}</span><b>{station.fromLine} <i>→</i> {station.toLine}</b></div>
       </header>
       <div className="scene-instruction"><span aria-hidden="true">✦</span> DRAG TO TURN <i>·</i> SCROLL TO ZOOM</div>
     </div>

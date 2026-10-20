@@ -11,6 +11,6 @@ test('Barcelona lines have stable distinct colours', () => {
 
 test('station names update signs with a safe compact label', () => {
   assert.equal(stationLabel('  verdaguer  '), 'VERDAGUER');
-  assert.equal(stationLabel(' '), 'VERDAGUER');
+  assert.equal(stationLabel(' '), 'CUSTOM STATION');
   assert.ok(stationLabel('x'.repeat(100)).length <= 32);
 });

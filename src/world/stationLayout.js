@@ -13,17 +13,18 @@ export const stationDimensions = Object.freeze({
   portalCeiling: 1.88,
 });
 
-const metres = value => Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
+const amount = value => Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
 const compressed = (value, scale) => -Math.expm1(-value / scale);
 const box = (name, x, y, z) => ({ name, min: [x[0], y[0], z[0]], max: [x[1], y[1], z[1]] });
 
-// Tween bounded geometry controls, so even huge distance changes grow evenly.
+// Inputs retain their original units: walking/belt metres and stair/escalator steps.
+// These bounded controls set schematic geometry, not a conversion to metres.
 export function getStationShape(values = defaultJourney) {
   return {
-    tunnel: compressed(metres(values.walkDistance) + metres(values.walkwayLength), 260),
-    escalator: compressed(metres(values.escalatorDistance), 45),
-    stairs: compressed(metres(values.stairDistance), 40),
-    walkway: metres(values.walkwayLength) > 0 ? 1.2 + 5.6 * compressed(metres(values.walkwayLength), 60) : 0,
+    tunnel: compressed(amount(values.walkDistance) + amount(values.walkwayLength), 260),
+    escalator: compressed(amount(values.escalatorDistance), 45),
+    stairs: compressed(amount(values.numSteps), 40),
+    walkway: amount(values.walkwayLength) > 0 ? 1.2 + 5.6 * compressed(amount(values.walkwayLength), 60) : 0,
   };
 }
 
@@ -36,10 +37,10 @@ export function interpolateStationShape(from, to, progress) {
 // Every y value is a finished walking surface, not the centre of a slab.
 // Curves approach a finite limit; long inputs never create unbounded geometry.
 export function getStationLayout(values = defaultJourney, shape = getStationShape(values)) {
-  const walking = metres(values.walkDistance);
-  const walkway = metres(values.walkwayLength);
-  const escalator = metres(values.escalatorDistance);
-  const stairs = metres(values.stairDistance);
+  const walking = amount(values.walkDistance);
+  const walkway = amount(values.walkwayLength);
+  const escalator = amount(values.escalatorDistance);
+  const stairs = amount(values.numSteps);
   const upperX = -3.2;
   const upperY = 0;
   const upperZ = 0;
