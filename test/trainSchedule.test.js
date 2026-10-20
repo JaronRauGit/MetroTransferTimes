@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { doorOpening, trainPosition, trainCycleSeconds } from '../src/world/trainSchedule.js';
+import { doorOpening, trainPosition, trainExitDistance, trainCycleSeconds } from '../src/world/trainSchedule.js';
 
 test('trains move continuously through the portals with doors closed during motion', () => {
   let previous = trainPosition(0);
@@ -14,4 +14,13 @@ test('trains move continuously through the portals with doors closed during moti
   assert.ok(trainPosition(trainCycleSeconds - .1) - 6.6 > 9.2);
   assert.equal(trainPosition(16), 0);
   assert.equal(doorOpening(16), 1);
+});
+
+test('even the longest exposed upper track clears the complete train before the loop resets', () => {
+  for (const end of [9.2, 12.28, 20.5, 26.28]) {
+    const exitDistance = trainExitDistance(end);
+    assert.ok(trainPosition(trainCycleSeconds - .01, exitDistance) - 6.6 > end);
+    assert.ok(trainPosition(43, exitDistance) > 0);
+    assert.equal(doorOpening(43), 0);
+  }
 });

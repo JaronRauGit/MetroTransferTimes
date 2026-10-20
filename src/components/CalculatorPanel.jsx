@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { calculateTransfer, emptyJourney, presets } from '../calculator.js';
-import { lineColor, lineOptions } from '../world/lineCatalog.js';
 import { stationPresets } from '../stationPresets.js';
+import LineSelect, { LineBadge } from './LineSelect.jsx';
 
 const fields = [
   { id: 'walkDistance', label: 'Tunnel walk', unit: 'm', glyph: '→' },
@@ -61,23 +61,24 @@ export default function CalculatorPanel({ values, station, onValuesChange, onSta
 
   return <section className={`calculator-dock${result ? ' has-result' : ''}`} aria-labelledby="calculator-title">
     <div className="dock-edge" aria-hidden="true" />
+    <div className="preset-strip">
+      <div className="preset-strip-heading"><strong>STATION PRESETS</strong><span>Illustrative lengths · ready to explore</span></div>
+      <div className="preset-list" role="group" aria-label="Station presets">
+        {stationPresets.map(preset => <button key={preset.id} type="button" className={`preset-card${selectedPreset === preset.id ? ' is-selected' : ''}`} aria-label={`Load ${preset.station.name}, ${preset.station.fromLine} to ${preset.station.toLine}`} aria-pressed={selectedPreset === preset.id} onClick={() => loadStation(preset.id)}>
+          <span className="preset-name">{preset.station.name}</span>
+          <span className="preset-lines"><LineBadge line={preset.station.fromLine} /><span aria-hidden="true">→</span><LineBadge line={preset.station.toLine} /></span>
+        </button>)}
+      </div>
+    </div>
     <div className="dock-inner">
       <div className="dock-identity">
         <div className="dock-kicker"><span className="kicker-light" /> THE STATION</div>
         <label className="station-field" htmlFor="stationName"><span>Station name</span><input id="stationName" type="text" maxLength="32" value={station.name} onChange={event => updateStation('name', event.target.value)} placeholder="Verdaguer" /></label>
         <div className="line-selectors">
-          <label htmlFor="fromLine" style={{ '--line-color': lineColor(station.fromLine) }}><span>FROM</span><select id="fromLine" value={station.fromLine} onChange={event => updateStation('fromLine', event.target.value)}>{lineOptions.map(line => <option key={line} value={line}>{line}</option>)}</select></label>
+          <LineSelect id="fromLine" label="From" value={station.fromLine} onChange={value => updateStation('fromLine', value)} />
           <span className="line-arrow" aria-hidden="true">→</span>
-          <label htmlFor="toLine" style={{ '--line-color': lineColor(station.toLine) }}><span>TO</span><select id="toLine" value={station.toLine} onChange={event => updateStation('toLine', event.target.value)}>{lineOptions.map(line => <option key={line} value={line}>{line}</option>)}</select></label>
+          <LineSelect id="toLine" label="To" value={station.toLine} onChange={value => updateStation('toLine', value)} />
         </div>
-        <label className="station-preset" htmlFor="stationPreset">
-          <span>Load a station example</span>
-          <select id="stationPreset" value={selectedPreset} onChange={event => loadStation(event.target.value)}>
-            <option value="" disabled>Custom transfer</option>
-            {stationPresets.map(preset => <option key={preset.id} value={preset.id}>{preset.station.name} · {preset.station.fromLine} → {preset.station.toLine}</option>)}
-          </select>
-          <small>Illustrative lengths · edit to match your route</small>
-        </label>
       </div>
       <div className="dock-form">
         <div className="dock-kicker"><span className="kicker-light terracotta" /> <h1 id="calculator-title">Build your transfer</h1><span className="dock-subtitle">THE MINIATURE RESPONDS AS YOU TYPE</span></div>

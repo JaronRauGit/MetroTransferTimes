@@ -29,7 +29,7 @@ export function getStationLayout(values = defaultJourney) {
   const upperZ = 0;
   const lowerX = 9.5 + 14 * compressed(walking + walkway, 260);
   // Keep the upper railway continuous above the more distant lower line.
-  // Its enclosed extension also hides departing trains inside the tunnel.
+  // A short sleeve at its far end hides departing trains inside the tunnel.
   const upperTrackEndX = lowerX + stationDimensions.trackZ + 2 - upperX;
   const lowerZ = 1;
   const escalatorRun = 2.9 + 3.8 * compressed(escalator, 45);

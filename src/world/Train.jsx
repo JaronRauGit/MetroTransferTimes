@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
 import { Block, Sign, colors } from './Primitives.jsx';
-import { trainCycleSeconds as cycleSeconds, trainPosition, doorOpening } from './trainSchedule.js';
+import { trainCycleSeconds as cycleSeconds, trainPosition, trainExitDistance, doorOpening } from './trainSchedule.js';
 
 function DoorPair({ side, reducedMotion, phaseOffset }) {
   const left = useRef();
@@ -66,7 +66,7 @@ function TrainCar({ x, index, reducedMotion, phaseOffset, line, stripe }) {
   </group>;
 }
 
-export default function Train({ reducedMotion, position = [0, -.36, -2.22], line = 'L3', stripe = colors.olive, phaseOffset = 6 }) {
+export default function Train({ reducedMotion, position = [0, -.36, -2.22], visibleEndX = 9.2, line = 'L3', stripe = colors.olive, phaseOffset = 6 }) {
   const train = useRef();
   const planes = useMemo(() => [new THREE.Plane(), new THREE.Plane()], []);
   const origin = useMemo(() => new THREE.Vector3(), []);
@@ -86,13 +86,13 @@ export default function Train({ reducedMotion, position = [0, -.36, -2.22], line
   }, [planes]);
   useFrame(({ clock }) => {
     if (!train.current) return;
-    train.current.position.x = position[0] + (reducedMotion ? 0 : trainPosition((clock.elapsedTime + phaseOffset) % cycleSeconds));
+    train.current.position.x = position[0] + (reducedMotion ? 0 : trainPosition((clock.elapsedTime + phaseOffset) % cycleSeconds, trainExitDistance(visibleEndX)));
     const platform = train.current.parent;
     platform.updateWorldMatrix(true, false);
     origin.setFromMatrixPosition(platform.matrixWorld);
     axis.set(1, 0, 0).transformDirection(platform.matrixWorld);
     planes[0].setFromNormalAndCoplanarPoint(axis, edge.copy(origin).addScaledVector(axis, -9.2));
-    planes[1].setFromNormalAndCoplanarPoint(oppositeAxis.copy(axis).negate(), edge.copy(origin).addScaledVector(axis, 9.2));
+    planes[1].setFromNormalAndCoplanarPoint(oppositeAxis.copy(axis).negate(), edge.copy(origin).addScaledVector(axis, visibleEndX));
   });
   return <group ref={train} position={position} userData={{ collisionRole: 'train' }}>
     {[-4.83, -1.61, 1.61, 4.83].map((x, index) => <TrainCar key={x} x={x} index={index} reducedMotion={reducedMotion} phaseOffset={phaseOffset} line={line} stripe={stripe} />)}

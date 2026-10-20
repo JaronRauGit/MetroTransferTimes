@@ -9,6 +9,7 @@ import { Traveller, Planter } from './Details.jsx';
 import BarcelonaStreet from './Surface.jsx';
 import PeopleFlow, { TransferRoute } from './PeopleFlow.jsx';
 import Train from './Train.jsx';
+import CreatorsNook from './CreatorsNook.jsx';
 import { getStationLayout, stationDimensions as d } from './stationLayout.js';
 import { lineColor, stationLabel } from './lineCatalog.js';
 
@@ -22,6 +23,7 @@ function framingPoints(layout) {
   const points = baseOutline(layout).map(([x, z]) => new THREE.Vector3(x, layout.groundY - .85, z));
   const addBox = (min, max) => { for (const x of [min[0], max[0]]) for (const y of [min[1], max[1]]) for (const z of [min[2], max[2]]) points.push(new THREE.Vector3(x, y, z)); };
   addBox([layout.streetMinX, layout.streetY, -6.8], [layout.streetMaxX, layout.streetY, 1.4]);
+  addBox([layout.upperX - 5.4, layout.upperY - 1.6, -10.4], [layout.upperX + 1.4, layout.streetY, -6.4]);
   [[layout.upperX - 5.95, 2.9, 3.7], [layout.upperX - 1.82, 3.9, 4.7], [layout.upperX + 2.85, 3.3, 3.95], [layout.lowerX + 2.08, 3.5, 3.6]].forEach(([x, width, height]) => addBox([x - width / 2, layout.streetY, -6.55], [x + width / 2, layout.streetY + height, -4.1]));
   return points;
 }
@@ -55,7 +57,7 @@ function SceneCamera({ layout }) {
     orbit.maxZoom = fit * 3;
     orbit.update();
   }, [camera, layout, size.width, size.height]);
-  return <OrbitControls ref={controls} makeDefault enablePan={false} enableDamping dampingFactor={.085} minPolarAngle={.48} maxPolarAngle={1.34} minAzimuthAngle={-.25} maxAzimuthAngle={1.8} rotateSpeed={.48} zoomSpeed={.7} />;
+  return <OrbitControls ref={controls} makeDefault enablePan={false} enableDamping dampingFactor={.085} minPolarAngle={.48} maxPolarAngle={1.34} rotateSpeed={.48} zoomSpeed={.7} />;
 }
 
 function Tracks({ endX }) {
@@ -70,14 +72,14 @@ function Tracks({ endX }) {
   </group>;
 }
 
-function RailTunnel({ side, endX = d.trackHalfLength }) {
-  const length = endX - 7.6;
-  const center = side * (7.6 + length / 2);
+function RailTunnel({ side, endX = d.trackHalfLength, startX = 7.6 }) {
+  const length = endX - startX;
+  const center = side * (startX + length / 2);
   return <group>
     {/* A hollow sleeve hides the clipping boundary deep inside the opening. */}
     {[-1, 1].map(edge => <Block key={edge} position={[center, (d.portalCeiling - .5) / 2, d.trackZ + edge * (d.portalInnerHalfWidth + .12)]} size={[length, d.portalCeiling + .5, .24]} color="#ab947c" />)}
     <Block position={[center, d.portalCeiling + .14, d.trackZ]} size={[length, .28, 2.64]} color="#bfa78a" />
-    <Block position={[side * 7.62, 2.06, d.trackZ]} size={[.19, .36, 2.8]} color="#d0b99a" />
+    <Block position={[side * (startX + .02), 2.06, d.trackZ]} size={[.19, .36, 2.8]} color="#d0b99a" />
   </group>;
 }
 
@@ -100,8 +102,8 @@ const Platform = memo(function Platform({ position, rotation = 0, line, reducedM
     <Planter position={[upper ? 6.45 : -6.4, .01, .55]} width={.64} />
     <Traveller position={[upper ? 3.3 : -6.7, .01, -.45]} shirt="#b57664" phase={1.1} reducedMotion={reducedMotion} />
     <Traveller position={[upper ? 5.8 : 5.6, .01, -.25]} shirt="#7b998a" phase={2.6} reducedMotion={reducedMotion} />
-    <RailTunnel side={-1} /><RailTunnel side={1} endX={trackEndX} />
-    <Train position={[0, -.36, d.trackZ]} line={line} stripe={color} phaseOffset={phaseOffset} reducedMotion={reducedMotion} />
+    <RailTunnel side={-1} /><RailTunnel side={1} endX={trackEndX} startX={upper ? trackEndX - 2.6 : 7.6} />
+    <Train position={[0, -.36, d.trackZ]} visibleEndX={trackEndX - .2} line={line} stripe={color} phaseOffset={phaseOffset} reducedMotion={reducedMotion} />
   </group>;
 });
 
@@ -190,6 +192,7 @@ export default function StationWorld({ values, station, journey, journeyRun, red
     <ContactShadows key={layout.groundY} position={[0, layout.groundY - .83, 0]} opacity={.2} scale={58} blur={2.9} far={10} resolution={512} frames={1} color="#51675f" />
     <group>
       <CutawayEarth layout={layout} />
+      <CreatorsNook upperX={layout.upperX} upperY={layout.upperY} />
       <BarcelonaStreet layout={layout} stationName={stationLabel(station.name)} reducedMotion={reducedMotion} />
       <Platform position={[layout.upperX, layout.upperY, layout.upperZ]} line={station.fromLine} reducedMotion={reducedMotion} phaseOffset={6} trackEndX={layout.upperTrackEndX} upper />
       <TransferTunnel layout={layout} fromLine={station.fromLine} toLine={station.toLine} reducedMotion={reducedMotion} />
