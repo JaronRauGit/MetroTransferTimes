@@ -121,7 +121,9 @@ function StandingFriend({ name, position, shirt, pants, hair, denim = false, coa
 }
 
 function ChairFriend() {
-  return <group name="creator-scarf" position={[.15, .73, .65]}>
+  // Match the standing friends' proportions, bending the knees to keep both
+  // feet on the compact seat rather than shrinking the whole person to fit.
+  return <group name="creator-scarf" position={[0, .7475, .4]} scale={1.3}>
     <group position={[.34, .3, 0]} rotation={[0, 0, -.65]}>
       <Block size={[.48, .61, .34]} color="#8f6d4f" />
       {[-.2, -.15, -.1, -.05, 0, .05, .1, .15, .2].map(x => <Block key={x} position={[x, 0, .174]} size={[.007, .54, .008]} color="#a18462" castShadow={false} />)}
@@ -133,14 +135,17 @@ function ChairFriend() {
     <Block position={[.48, .56, .17]} size={[.37, .17, .2]} color="#60766a" />
     <Block position={[.32, .39, .22]} size={[.13, .27, .06]} rotation={[0, 0, -.5]} color="#6f8473" />
     {[-1, 1].map(side => <group key={side}>
-      <Rod from={[.08, .13, side * .11]} to={[-.45, .05, .15 + side * .12]} radius={.11} color="#7f8978" />
-      <Rod from={[-.45, .05, .15 + side * .12]} to={[-.92, .02, .22 + side * .14]} radius={.095} color="#7f8978" />
-      <Block position={[-.27, .15, .15 + side * .12]} size={[.2, .04, .15]} color="#929b86" />
-      <group position={[-1, 0, .22 + side * .14]} rotation={[0, -Math.PI / 2, 0]}><Trainer position={[0, 0, 0]} color="#465a50" /></group>
+      <Rod from={[.08, .13, side * .11]} to={[-.35, .25, .15 + side * .12]} radius={.11} color="#7f8978" />
+      <Rod from={[-.35, .25, .15 + side * .12]} to={[-.7, .02, .22 + side * .14]} radius={.095} color="#7f8978" />
+      <Block position={[-.27, .34, .15 + side * .12]} size={[.2, .04, .15]} color="#929b86" />
+      <group position={[-.76, 0, .22 + side * .14]} rotation={[0, -Math.PI / 2, 0]}><Trainer position={[0, 0, 0]} color="#465a50" /></group>
     </group>)}
-    <Rod from={[.58, .51, .2]} to={[.37, .22, .26]} radius={.08} color="#8f6d4f" />
-    <Rod from={[.37, .22, .26]} to={[.08, .27, .29]} radius={.065} color="#8f6d4f" />
-    <Hand position={[.08, .27, .29]} />
+    {[-1, 1].map(side => <group key={side} name={side < 0 ? 'seated-left-arm' : 'seated-right-arm'}>
+      <Rod from={[.58, .51, side * .2]} to={[.37, .22, side * .26]} radius={.08} color="#8f6d4f" />
+      <Rod from={[.37, .22, side * .26]} to={[.02, .27, side * .29]} radius={.065} color="#8f6d4f" />
+      <Block position={[.07, .263, side * .286]} size={[.065, .14, .14]} color="#795c44" />
+      <Hand position={[.02, .27, side * .29]} />
+    </group>)}
   </group>;
 }
 
@@ -201,7 +206,10 @@ function CreatorsTerrace() {
       {[-3.5, -1.05, 1.4, 3.85].map(z => <Rod key={z} from={[x, 0, z]} to={[x, 1.1, z]} radius={.04} color={colors.tealDark} />)}
     </group>)}
     <TerracePlanter x={-6.25} /><TerracePlanter x={6.25} />
-    <Sign position={[0, -.16, 4.21]} size={[5.3, .32]} text="THE PEOPLE BETWEEN THE LINES" background={colors.tealDark} foreground={colors.cream} frame={colors.tealDark} />
+    <group name="creators-caption">
+      <Block position={[0, -.2, 4.19]} size={[9.1, .73, .14]} color="#c6b898" />
+      <Sign position={[0, -.2, 4.29]} size={[8.8, .58]} text="PLANESPOTTING WITH THE BEST" background={colors.tealDark} foreground={colors.cream} frame={colors.tealDark} />
+    </group>
     <Sign position={[4.8, 6.95, -3.7]} size={[3.6, .75]} text="MADE BY FRIENDS" subtext="BARCELONA  ·  EL PRAT" background={colors.cream} foreground={colors.tealDark} frame="#ae9571" />
     {[-6.55, 6.55].map(x => <group key={x} position={[x, 5.3, -3.62]}>
       <Block size={[.22, .58, .18]} color={colors.tealDark} />
@@ -222,9 +230,9 @@ export default function CreatorsNook({ layout }) {
       <group name="creators-chair-group" position={[-.5, 0, .6]} rotation={[0, Math.PI / 2, 0]}>
         <StoneChair /><ChairFriend />
       </group>
-      <StandingFriend name="creator-navy" position={[-1.6, 0, -.9]} scale={1.22} shirt="#2b3d50" pants="#788180" hair="#66503d" navy />
-      <StandingFriend name="creator-coat" position={[-.18, 0, -1.25]} scale={1.3} shirt="#514f43" pants="#48504a" hair="#796447" coat />
-      <StandingFriend name="creator-denim" position={[1.9, 0, -1.05]} scale={1.5} shirt="#5c8495" pants="#c7bda0" hair="#44372f" denim />
+      <StandingFriend name="creator-navy" position={[-1.35, 0, -.9]} scale={1.22} shirt="#2b3d50" pants="#788180" hair="#66503d" navy />
+      <StandingFriend name="creator-coat" position={[-.45, 0, -1.25]} scale={1.3} shirt="#514f43" pants="#48504a" hair="#796447" coat />
+      <StandingFriend name="creator-denim" position={[1.15, 0, -1.05]} scale={1.5} shirt="#5c8495" pants="#c7bda0" hair="#44372f" denim />
     </group>
     <CreatorsPlane position={l.aircraftPosition} rotation={l.aircraftRotation} scale={l.aircraftScale} />
   </group>;
