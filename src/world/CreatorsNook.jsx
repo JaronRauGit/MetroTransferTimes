@@ -11,8 +11,8 @@ function Hand({ position }) {
   return <mesh position={position} castShadow><sphereGeometry args={[.071, 8, 6]} /><meshStandardMaterial color={skin} roughness={1} flatShading /></mesh>;
 }
 
-function Head({ hair = '#5a4334', glasses = false, beard = false, longHair = false, cropped = false }) {
-  return <group name="portrait-head" rotation={[-.23, 0, 0]}>
+function Head({ hair = '#5a4334', glasses = false, beard = false, longHair = false, cropped = false, yaw = 0 }) {
+  return <group name="portrait-head" rotation={[-.42, yaw, 0, 'YXZ']}>
     <mesh castShadow><sphereGeometry args={[.19, 12, 9]} /><meshStandardMaterial color={skin} roughness={1} flatShading /></mesh>
     <mesh position={[0, .12, -.025]} scale={[1.05, .55, 1.07]} castShadow><sphereGeometry args={[.19, 11, 7]} /><meshStandardMaterial color={hair} roughness={1} flatShading /></mesh>
     {!longHair && <Block position={[-.05, cropped ? .15 : .18, .045]} size={[.21, cropped ? .045 : .075, .17]} rotation={[0, 0, -.15]} color={hair} />}
@@ -34,7 +34,10 @@ function Head({ hair = '#5a4334', glasses = false, beard = false, longHair = fal
     </group>)}
     {glasses && <Block position={[0, .028, .21]} size={[.036, .014, .018]} color="#424e48" castShadow={false} />}
     <Block position={[0, -.022, .188]} size={[.039, .055, .041]} color="#c89c77" />
-    {beard && <mesh position={[0, -.105, .065]} scale={[.83, .39, .83]}><sphereGeometry args={[.19, 10, 7]} /><meshStandardMaterial color={hair} roughness={1} flatShading /></mesh>}
+    {beard && <mesh name="short-stubble">
+      <sphereGeometry args={[.1918, 12, 5, .35, Math.PI - .7, 1.8, .8]} />
+      <meshStandardMaterial color="#897968" transparent opacity={.48} depthWrite={false} roughness={1} flatShading />
+    </mesh>}
     <Block position={[0, -.09, .166]} size={[.052, .012, .016]} color="#9b725a" castShadow={false} />
   </group>;
 }
@@ -47,20 +50,52 @@ function Trainer({ position, color = '#4c5148' }) {
   </group>;
 }
 
+function Backpack({ grey = false }) {
+  const strap = grey ? '#939e9c' : '#b09973';
+  return <group name="backpack">
+    <Block position={[0, 1.02, -.21]} size={[.39, .54, .14]} color={grey ? '#56615d' : '#ad936a'} />
+    <Block position={[0, .91, -.3]} size={[.28, .22, .035]} color={grey ? '#6e7872' : '#baa47d'} />
+    {[-1, 1].map(side => <group key={side} name="backpack-shoulder-strap">
+      <Rod from={[side * .18, 1.28, -.23]} to={[side * .21, 1.37, .02]} radius={.025} color={strap} />
+      <Rod from={[side * .21, 1.37, .02]} to={[side * .205, 1.17, .177]} radius={.025} color={strap} />
+      <Rod from={[side * .205, 1.17, .177]} to={[side * .26, .97, .12]} radius={.025} color={strap} />
+      <Rod from={[side * .26, .97, .12]} to={[side * .23, .89, -.18]} radius={.025} color={strap} />
+    </group>)}
+  </group>;
+}
+
+function Hoodie() {
+  return <group name="zip-hoodie">
+    <mesh position={[0, 1.27, -.145]} scale={[1.1, .9, .5]} castShadow>
+      <sphereGeometry args={[.21, 10, 7]} /><meshStandardMaterial color="#253746" roughness={1} flatShading />
+    </mesh>
+    <mesh position={[0, 1.32, -.06]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+      <torusGeometry args={[.16, .045, 5, 12]} /><meshStandardMaterial color="#364b59" roughness={1} />
+    </mesh>
+    <Block position={[0, 1.02, .163]} size={[.014, .52, .016]} color="#91a2a5" />
+    <Block position={[.012, 1.17, .18]} size={[.025, .045, .018]} color="#b4bdb4" />
+    {[-1, 1].map(side => <group key={side}>
+      <Rod from={[side * .1, 1.31, .165]} to={[side * .08, 1.1, .18]} radius={.009} color="#a4b1ad" />
+      <Rod from={[side * .06, .86, .16]} to={[side * .19, .94, .16]} radius={.009} color="#203341" />
+    </group>)}
+  </group>;
+}
+
 function StandingFriend({ name, position, shirt, pants, hair, denim = false, coat = false, navy = false, scale = 1 }) {
   return <group name={name} position={position} scale={scale}>
     <Block position={[0, 1.03, 0]} size={[.48, .61, .3]} color={shirt} />
     <Block position={[0, .75, 0]} size={[.47, .065, .31]} color={navy ? '#25353d' : denim ? '#4d7382' : '#444c45'} />
-    {!navy && <Block position={[0, 1.02, .158]} size={[denim ? .14 : .075, .51, .024]} color={denim ? '#e6dcc3' : '#85877a'} />}
+    {!navy && <Block position={[0, 1.02, .158]} size={[.055, .51, .024]} color={denim ? '#6e909b' : '#616054'} />}
+    {coat && <Block position={[0, 1.02, .177]} size={[.012, .52, .012]} color="#949b8f" />}
     {[-1, 1].map(side => <group key={side}>
       <Rod from={[side * .12, .78, 0]} to={[side * .14, .12, .03]} radius={.095} color={pants} />
       <Block position={[side * .15, .41, .095]} size={[.019, .43, .012]} color={denim ? '#b4aa8e' : '#424c44'} castShadow={false} />
       <Trainer position={[side * .14, .065, .1]} />
-      {!navy && <Block position={[side * .105, 1.29, .17]} size={[.15, .13, .04]} rotation={[0, 0, side * -.35]} color={denim ? '#85a2a8' : '#5e6053'} />}
+      {!navy && <Block position={[side * (coat ? .055 : .105), 1.29, .17]} size={[coat ? .105 : .15, .13, .04]} rotation={[0, 0, coat ? 0 : side * -.35]} color={denim ? '#85a2a8' : '#5e6053'} />}
       {coat ? <>
-        <Rod from={[side * .27, 1.26, 0]} to={[side * .29, .96, .18]} radius={.083} color={shirt} />
-        <Rod from={[side * .29, .96, .18]} to={[-side * .14, 1.01 + side * .025, .24]} radius={.077} color={shirt} />
-        <Hand position={[-side * .14, 1.01 + side * .025, .24]} />
+        <Rod from={[side * .27, 1.26, 0]} to={[side * .29, .96, .15]} radius={.083} color={shirt} />
+        <Rod from={[side * .29, .96, .15]} to={[-side * .14, 1.01 + side * .025, .18]} radius={.077} color={shirt} />
+        <Hand position={[-side * .14, 1.01 + side * .025, .19]} />
       </> : <>
         <Rod from={[side * .27, 1.26, 0]} to={[side * .36, .79, .055]} radius={.083} color={shirt} />
         <Rod from={[side * .36, .79, .055]} to={[side * .35, .66, .1]} radius={.065} color={skin} />
@@ -74,62 +109,56 @@ function StandingFriend({ name, position, shirt, pants, hair, denim = false, coa
         <Block position={[x, 1.18, .188]} size={[.12, .026, .02]} color="#9ab0ae" />
         <Block position={[x, 1.15, .204]} size={[.018, .018, .012]} color="#c3b68b" castShadow={false} />
       </group>)}
-      {[.85, .96, 1.07, 1.18].map(y => <Block key={y} position={[.075, y, .183]} size={[.017, .017, .012]} color="#c3b68b" castShadow={false} />)}
-      <Block position={[0, 1.02, -.24]} size={[.39, .54, .19]} color="#ad936a" />
-      <Block position={[0, .91, -.345]} size={[.28, .22, .035]} color="#baa47d" />
-      {[-1, 1].map(side => <group key={side} name="backpack-shoulder-strap">
-        <Rod from={[side * .18, 1.28, -.23]} to={[side * .21, 1.37, .02]} radius={.025} color="#b09973" />
-        <Rod from={[side * .21, 1.37, .02]} to={[side * .205, 1.17, .177]} radius={.025} color="#b09973" />
-        <Rod from={[side * .205, 1.17, .177]} to={[side * .26, .97, .12]} radius={.025} color="#b09973" />
-        <Rod from={[side * .26, .97, .12]} to={[side * .23, .89, -.18]} radius={.025} color="#b09973" />
-      </group>)}
+      {[.85, .96, 1.07, 1.18].map(y => <Block key={y} position={[.013, y, .183]} size={[.017, .017, .012]} color="#c3b68b" castShadow={false} />)}
     </>}
     {navy && <>
-      <Block position={[0, 1.32, .12]} size={[.16, .035, .05]} color="#5d6b68" />
+      <Hoodie />
       <Block position={[.115, 1.17, .16]} size={[.065, .043, .012]} color="#b5b9a7" castShadow={false} />
     </>}
+    {(coat || denim) && <Backpack grey={coat} />}
     <group position={[0, 1.54, 0]}><Head hair={hair} longHair={coat} cropped={denim} beard={navy} /></group>
   </group>;
 }
 
 function ChairFriend() {
-  return <group name="creator-scarf" position={[.15, .96, .95]}>
+  return <group name="creator-scarf" position={[.15, .73, .65]}>
     <group position={[.34, .3, 0]} rotation={[0, 0, -.65]}>
-      <Block size={[.48, .61, .34]} color="#a18d78" />
-      <Block position={[0, .02, .18]} size={[.14, .55, .025]} color="#626c60" />
-      {[-.13, .13].map(x => <Block key={x} position={[x, .13, .18]} size={[.16, .2, .045]} rotation={[0, 0, x > 0 ? -.16 : .16]} color="#b7a28a" />)}
-      <Block position={[.15, -.14, .19]} size={[.13, .1, .04]} color="#8d7c69" />
+      <Block size={[.48, .61, .34]} color="#8f6d4f" />
+      {[-.2, -.15, -.1, -.05, 0, .05, .1, .15, .2].map(x => <Block key={x} position={[x, 0, .174]} size={[.007, .54, .008]} color="#a18462" castShadow={false} />)}
+      <Block position={[0, .02, .18]} size={[.07, .55, .025]} color="#795c44" />
+      {[-.13, .13].map(x => <Block key={x} position={[x, .13, .18]} size={[.16, .2, .045]} rotation={[0, 0, x > 0 ? -.16 : .16]} color="#a18462" />)}
+      <Block position={[.15, -.14, .19]} size={[.13, .1, .04]} color="#9d7c58" />
     </group>
-    <group position={[.65, .76, .03]} rotation={[0, 0, -.22]}><Head hair="#574437" glasses /></group>
+    <group position={[.65, .76, .03]} rotation={[0, 0, -.22]}><Head hair="#574437" glasses yaw={-Math.PI / 2} /></group>
     <Block position={[.48, .56, .17]} size={[.37, .17, .2]} color="#60766a" />
     <Block position={[.32, .39, .22]} size={[.13, .27, .06]} rotation={[0, 0, -.5]} color="#6f8473" />
     {[-1, 1].map(side => <group key={side}>
-      <Rod from={[.08, .13, side * .11]} to={[-.8, .05, .15 + side * .12]} radius={.11} color="#7f8978" />
-      <Rod from={[-.8, .05, .15 + side * .12]} to={[-1.9, .02, .22 + side * .14]} radius={.095} color="#7f8978" />
-      <Block position={[-.45, .15, .15 + side * .12]} size={[.24, .04, .15]} color="#929b86" />
-      <group position={[-2, 0, .22 + side * .14]} rotation={[0, -Math.PI / 2, 0]}><Trainer position={[0, 0, 0]} color="#465a50" /></group>
+      <Rod from={[.08, .13, side * .11]} to={[-.45, .05, .15 + side * .12]} radius={.11} color="#7f8978" />
+      <Rod from={[-.45, .05, .15 + side * .12]} to={[-.92, .02, .22 + side * .14]} radius={.095} color="#7f8978" />
+      <Block position={[-.27, .15, .15 + side * .12]} size={[.2, .04, .15]} color="#929b86" />
+      <group position={[-1, 0, .22 + side * .14]} rotation={[0, -Math.PI / 2, 0]}><Trainer position={[0, 0, 0]} color="#465a50" /></group>
     </group>)}
-    <Rod from={[.58, .51, .2]} to={[.37, .22, .26]} radius={.08} color="#a18d78" />
-    <Rod from={[.37, .22, .26]} to={[.08, .27, .29]} radius={.065} color="#a18d78" />
+    <Rod from={[.58, .51, .2]} to={[.37, .22, .26]} radius={.08} color="#8f6d4f" />
+    <Rod from={[.37, .22, .26]} to={[.08, .27, .29]} radius={.065} color="#8f6d4f" />
     <Hand position={[.08, .27, .29]} />
   </group>;
 }
 
 function StoneChair() {
   const seat = useMemo(() => {
-    const shape = new Shape().moveTo(-2.45, 0).lineTo(-1.6, 0).lineTo(-1.6, .1);
-    shape.absarc(-1, .1, .6, Math.PI, 0, true);
-    return shape.lineTo(-.4, 0).lineTo(1.65, 0).lineTo(1.65, .88).lineTo(-2.45, .88).closePath();
+    const shape = new Shape().moveTo(-1.35, 0).lineTo(-.75, 0).lineTo(-.75, .08);
+    shape.absarc(-.35, .08, .4, Math.PI, 0, true);
+    return shape.lineTo(.05, 0).lineTo(1.45, 0).lineTo(1.45, .65).lineTo(-1.35, .65).closePath();
   }, []);
-  const back = useMemo(() => new Shape().moveTo(.5, .88).lineTo(1.12, 1.7).lineTo(1.43, 1.56).lineTo(.84, .88).closePath(), []);
+  const back = useMemo(() => new Shape().moveTo(.5, .65).lineTo(1.12, 1.47).lineTo(1.43, 1.33).lineTo(.84, .65).closePath(), []);
   const aggregate = useRef();
   const flecks = useMemo(() => {
     const pieces = [];
     for (let i = 0; i < 150; i++) {
-      const x = -2.41 + ((i * .6180339) % 1) * 4.02;
-      const y = .035 + ((i * .4142136) % 1) * .81;
-      const opening = Math.abs(x + 1) < .62 && y < .12 + Math.sqrt(Math.max(0, .62 ** 2 - (x + 1) ** 2));
-      if (!opening) pieces.push([x, y, 1.722, .009 + (i % 3) * .005]);
+      const x = -1.31 + ((i * .6180339) % 1) * 2.72;
+      const y = .035 + ((i * .4142136) % 1) * .58;
+      const opening = Math.abs(x + .35) < .42 && y < .1 + Math.sqrt(Math.max(0, .42 ** 2 - (x + .35) ** 2));
+      if (!opening) pieces.push([x, y, 1.172, .009 + (i % 3) * .005]);
     }
     return pieces;
   }, []);
@@ -140,7 +169,7 @@ function StoneChair() {
   }, [flecks]);
   return <group name="stone-chair">
     {[seat, back].map((shape, i) => <mesh key={i} position={[0, 0, -.5]} castShadow receiveShadow>
-      <extrudeGeometry args={[shape, { depth: 2.2, steps: 1, curveSegments: 18, bevelEnabled: true, bevelSize: .016, bevelThickness: .016, bevelSegments: 1 }]} />
+      <extrudeGeometry args={[shape, { depth: 1.65, steps: 1, curveSegments: 18, bevelEnabled: true, bevelSize: .016, bevelThickness: .016, bevelSegments: 1 }]} />
       <meshStandardMaterial color={i ? '#bcbcae' : '#c2bfae'} roughness={1} />
     </mesh>)}
     <instancedMesh ref={aggregate} args={[undefined, undefined, flecks.length]}><boxGeometry /><meshStandardMaterial color="#a4a591" roughness={1} /></instancedMesh>
@@ -189,8 +218,11 @@ export default function CreatorsNook({ layout }) {
   return <group name="creators-nook" position={[l.x, l.y, l.z]} rotation={[0, Math.PI, 0]}>
     <CreatorsTerrace />
     <group name="creators-portrait" position={[.35, 0, -.1]} scale={l.figureScale}>
-      <StoneChair /><ChairFriend />
-      <StandingFriend name="creator-navy" position={[-1.6, 0, -.9]} scale={1.22} shirt="#2d3e46" pants="#788180" hair="#66503d" navy />
+      {/* Local +X is the backrest; this turn points it toward the rear wall. */}
+      <group name="creators-chair-group" position={[-.5, 0, .6]} rotation={[0, Math.PI / 2, 0]}>
+        <StoneChair /><ChairFriend />
+      </group>
+      <StandingFriend name="creator-navy" position={[-1.6, 0, -.9]} scale={1.22} shirt="#2b3d50" pants="#788180" hair="#66503d" navy />
       <StandingFriend name="creator-coat" position={[-.18, 0, -1.25]} scale={1.3} shirt="#514f43" pants="#48504a" hair="#796447" coat />
       <StandingFriend name="creator-denim" position={[1.9, 0, -1.05]} scale={1.5} shirt="#5c8495" pants="#c7bda0" hair="#44372f" denim />
     </group>
