@@ -79,7 +79,7 @@ export function Sign({ position, size = [1.5, .45], text, subtext, background = 
 export function FloorSlab({ position, size, color = colors.sand, sideColor = colors.stoneSide }) {
   const [width, depth, thickness] = size;
   return <group position={position}>
-    <Block position={[0, -thickness / 2, 0]} size={[width, thickness, depth]} color={sideColor} />
-    <Block position={[0, .015, 0]} size={[width, .055, depth]} color={color} castShadow={false} />
+    <Block position={[0, -(thickness + .055) / 2, 0]} size={[width, thickness - .055, depth]} color={sideColor} />
+    <Block position={[0, -.0275, 0]} size={[width, .055, depth]} color={color} castShadow={false} />
   </group>;
 }

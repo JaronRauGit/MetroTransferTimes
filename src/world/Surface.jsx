@@ -25,7 +25,7 @@ function CasaFacade({ x }) {
 }
 
 function FlowerTile({ x, z }) {
-  return <group position={[x, 3.795, z]}>
+  return <group position={[x, 3.565, z]}>
     <Block position={[0, -.007, 0]} size={[.48, .014, .48]} color="#ddc9a9" castShadow={false} />
     {[0, 1, 2, 3].map(index => {
       const angle = index * Math.PI / 2;
@@ -60,37 +60,41 @@ function BarcelonaLamp({ position }) {
 }
 
 function PavementOpening({ layout, stationName }) {
-  const x = layout.entranceX;
+  const l = layout;
+  const x = l.entranceX;
+  const width = l.entranceBottomX - l.entranceTopX + .36;
   return <group>
-    <Block position={[x, 2.17, -2.07]} size={[3.52, 2.75, .14]} color="#c7ad90" />
-    <Block position={[x - 1.74, 2.14, -1.08]} size={[.13, 2.83, 1.93]} color="#d1b99b" />
-    <Block position={[x + 1.74, 3.18, -1.08]} size={[.13, .75, 1.93]} color="#d1b99b" />
-    <Block position={[x, 3.68, .03]} size={[3.58, .24, .2]} color="#d1b99b" />
-    <Block position={[x - 1.78, 3.68, -1.07]} size={[.2, .24, 2.1]} color="#d1b99b" />
-    <Block position={[x + 1.78, 3.68, -1.07]} size={[.2, .24, 2.1]} color="#d1b99b" />
-    <StaircaseAlongX topX={x - 1.34} bottomX={x + 1.34} yTop={3.56} yBottom={.38} z={-1.05} width={1.5} steps={19} />
-    <Rod from={[x - 1.64, 4.12, .02]} to={[x + 1.64, 4.12, .02]} radius={.043} color={colors.tealDark} />
-    <Block position={[x - 1.85, 4.55, -.05]} size={[.11, 1.9, .11]} color={colors.metal} />
-    <Sign position={[x - 1.85, 5.46, -.02]} size={[.64, .64]} text="M" background={colors.coral} foreground={colors.warmWhite} frame={colors.coral} />
-    <Sign position={[x + .15, 4.0, .16]} size={[2.53, .34]} text={stationName} background={colors.cream} foreground={colors.tealDark} frame={colors.tealDark} />
-    <Turnstiles position={[x + 1.85, .38, .34]} />
+    <Block position={[x, (l.streetY + l.upperY) / 2, -.81]} size={[width, l.streetY - l.upperY, .12]} color="#cfb698" />
+    <Block position={[l.entranceTopX - .21, (l.streetY + l.upperY) / 2, l.entranceZ]} size={[.12, l.streetY - l.upperY, 1.98]} color="#d1b99b" />
+    {[-.83, 1.28].map(z => <Block key={z} position={[x, l.streetY + .13, z]} size={[width + .1, .26, .18]} color="#d1b99b" />)}
+    <Block position={[l.entranceBottomX + .23, l.streetY + .13, l.entranceZ]} size={[.18, .26, 2.25]} color="#d1b99b" />
+    <FloorSlab position={[l.entranceTopX - .09, l.streetY, l.entranceZ]} size={[.18, 1.7, .2]} color="#eee0c4" />
+    <StaircaseAlongX topX={l.entranceTopX} bottomX={l.entranceBottomX} yTop={l.streetY} yBottom={l.upperY} z={l.entranceZ} width={1.7} steps={26} />
+    <Block position={[l.entranceTopX - .17, l.streetY + .75, 1.32]} size={[.1, 1.5, .1]} color={colors.metal} />
+    <Sign position={[l.entranceTopX - .17, l.streetY + 1.6, 1.35]} size={[.64, .64]} text="M" background={colors.coral} foreground={colors.warmWhite} frame={colors.coral} />
+    {[-1, 1].map(side => <Rod key={side} from={[x + side, l.streetY + .2, 1.31]} to={[x + side, l.streetY + .53, 1.31]} radius={.035} color={colors.tealDark} />)}
+    <Sign position={[x, l.streetY + .54, 1.35]} size={[2.5, .34]} text={stationName} background={colors.cream} foreground={colors.tealDark} frame={colors.tealDark} />
+    <Turnstiles position={[l.entranceBottomX + .72, l.upperY, l.entranceZ]} rotation={[0, Math.PI / 2, 0]} />
   </group>;
 }
 
 export default function BarcelonaStreet({ layout, stationName, reducedMotion }) {
-  const width = layout.span + 20;
+  const width = layout.streetMaxX - layout.streetMinX;
+  const center = (layout.streetMaxX + layout.streetMinX) / 2;
   const x = layout.entranceX;
-  const leftWidth = x - 1.78 + width / 2;
-  const rightStart = x + 1.78;
-  const rightWidth = width / 2 - rightStart;
+  const leftWidth = layout.entranceTopX - .18 - layout.streetMinX;
+  const rightStart = layout.entranceBottomX + .18;
+  const rightWidth = layout.streetMaxX - rightStart;
   return <group>
-    <Block position={[0, 2.3, -4.74]} size={[width, 2.45, 2.2]} color="#bfa68d" />
-    <FloorSlab position={[0, 3.56, -4.65]} size={[width, 4.18, .44]} color="#e9d7b5" />
-    <FloorSlab position={[0, 3.56, -2.33]} size={[width, .53, .44]} color="#aeb5a6" sideColor="#9f9e8c" />
-    <FloorSlab position={[-width / 2 + leftWidth / 2, 3.56, -1.08]} size={[leftWidth, 1.98, .44]} color="#eee0c4" />
-    <FloorSlab position={[rightStart + rightWidth / 2, 3.56, -1.08]} size={[rightWidth, 1.98, .44]} color="#eee0c4" />
-    <Block position={[0, 3.61, -2.52]} size={[width, .018, .045]} color="#faf1d6" castShadow={false} />
-    {Array.from({ length: 15 }, (_, i) => <Block key={i} position={[-width / 2 + (i + .5) * width / 15, 3.59, -2.34]} size={[.07, .015, .24]} color="#f3e7ca" castShadow={false} />)}
+    <group position={[0, layout.streetY - 3.56, 0]}>
+    <FloorSlab position={[center, 3.56, -4.65]} size={[width, 4.18, .44]} color="#e9d7b5" />
+    <FloorSlab position={[center, 3.56, -2.33]} size={[width, .53, .44]} color="#aeb5a6" sideColor="#9f9e8c" />
+    <FloorSlab position={[layout.streetMinX + leftWidth / 2, 3.56, -.3325]} size={[leftWidth, 3.465, .44]} color="#eee0c4" />
+    <FloorSlab position={[rightStart + rightWidth / 2, 3.56, -.3325]} size={[rightWidth, 3.465, .44]} color="#eee0c4" />
+    <FloorSlab position={[x, 3.56, -1.4075]} size={[rightStart - layout.entranceTopX + .18, 1.315, .44]} color="#eee0c4" />
+    <FloorSlab position={[x, 3.56, 1.325]} size={[rightStart - layout.entranceTopX + .18, .15, .44]} color="#eee0c4" />
+    <Block position={[center, 3.565, -2.52]} size={[width, .01, .045]} color="#faf1d6" castShadow={false} />
+    {Array.from({ length: 15 }, (_, i) => <Block key={i} position={[layout.streetMinX + (i + .5) * width / 15, 3.565, -2.34]} size={[.07, .01, .24]} color="#f3e7ca" castShadow={false} />)}
     <Building position={[layout.upperX - 5.95, 3.58, -5.35]} width={2.9} depth={2.05} height={3.2} color="#e3c8a6" roof="#b7765c" flat />
     <CasaFacade x={layout.upperX - 1.82} />
     <Building position={[layout.upperX + 2.85, 3.58, -5.35]} width={3.1} depth={2.1} height={3.45} color="#e9dcbf" roof="#8ca08a" flat />
@@ -98,15 +102,16 @@ export default function BarcelonaStreet({ layout, stationName, reducedMotion }) 
     <LowPolyTree position={[layout.upperX + 5.08, 3.58, -3.52]} scale={.7} />
     <LowPolyTree position={[layout.lowerX - 1.55, 3.58, -3.5]} hue="#7f9878" scale={.7} />
     <Palm position={[layout.lowerX + 4.45, 3.58, -3.3]} scale={.68} />
-    <PavementOpening layout={layout} stationName={stationName} />
     {Array.from({ length: 11 }, (_, i) => {
-      const tileX = -width / 2 + 1.5 + i * (width - 3) / 10;
-      return Math.abs(tileX - x) < 2 ? null : <FlowerTile key={i} x={tileX} z={-.72} />;
+      const tileX = layout.streetMinX + 1.5 + i * (width - 3) / 10;
+      return Math.abs(tileX - x) < 2.6 ? null : <FlowerTile key={i} x={tileX} z={.65} />;
     })}
     <BarcelonaBench position={[layout.upperX + 4.72, 3.58, -1.33]} />
     <BarcelonaLamp position={[layout.upperX + 5.95, 3.58, -1.16]} />
     <BarcelonaLamp position={[layout.lowerX + 4.6, 3.58, -1.16]} />
     <Traveller position={[layout.upperX + 2.8, 3.58, -2.86]} shirt="#c16e59" phase={1.4} walk={.23} reducedMotion={reducedMotion} />
     <Traveller position={[layout.lowerX + 2.1, 3.58, -1.25]} shirt="#d1a268" phase={3} walk={.17} reducedMotion={reducedMotion} />
+    </group>
+    <PavementOpening layout={layout} stationName={stationName} />
   </group>;
 }

@@ -1,5 +1,6 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Shape } from 'three';
 import { Block, Rod, Sign, colors } from './Primitives.jsx';
 
 export function Building({ position, width, depth, height, color = colors.cream, roof = colors.terracotta, flat = false }) {
@@ -50,43 +51,33 @@ export function Palm({ position, scale = 1 }) {
   </group>;
 }
 
-export function Staircase({ x, topY, bottomY, topZ, bottomZ, width = 1.55, steps = 12, color = colors.limestone }) {
+export function Staircase({ x, topY, bottomY, topZ, bottomZ, width = 1.55, steps = 12, color = colors.limestone, bottomOnFloor = false }) {
   const rise = topY - bottomY;
   const run = bottomZ - topZ;
-  const length = Math.hypot(rise, run);
+  const riser = rise / steps;
   return <group>
-    <Block position={[x, (topY + bottomY) / 2 - .13, (topZ + bottomZ) / 2]} size={[width + .06, .18, length]} rotation={[Math.atan2(rise, run), 0, 0]} color="#b7aa96" />
     {Array.from({ length: steps }, (_, i) => {
+      if (bottomOnFloor && i === steps - 1) return null;
       const t = (i + .5) / steps;
-      return <Block key={i} position={[x, topY - (i + 1) * rise / steps + .035, topZ + t * run]} size={[width, .1, run / steps + .025]} color={i % 2 ? color : '#e4cfb0'} />;
+      const treadY = topY - (i + 1) * riser;
+      return <group key={i}>
+        <Block position={[x, treadY - (riser + .14) / 2, topZ + t * run]} size={[width, riser + .14, Math.abs(run) / steps]} color={i % 2 ? color : '#e4cfb0'} />
+        <Block position={[x, treadY + .006, topZ + (i + (run > 0 ? .88 : .12)) * run / steps]} size={[width - .03, .012, .035]} color="#eac985" castShadow={false} />
+      </group>;
     })}
     {[-1, 1].map(side => {
       const edge = x + side * (width / 2 + .09);
       return <group key={side}>
-        <Rod from={[edge, topY + .68, topZ]} to={[edge, bottomY + .68, bottomZ]} radius={.037} color={colors.tealDark} />
-        <Rod from={[edge, topY + .07, topZ]} to={[edge, bottomY + .07, bottomZ]} radius={.025} color={colors.metal} />
-        {[0, .5, 1].map(t => <Rod key={t} from={[edge, topY - t * rise + .07, topZ + t * run]} to={[edge, topY - t * rise + .68, topZ + t * run]} radius={.026} color={colors.metal} />)}
+        <Rod from={[edge, topY + .73, topZ]} to={[edge, bottomY + .73, bottomZ]} radius={.037} color={colors.tealDark} />
+        {[0, .25, .5, .75, 1].map(t => <Rod key={t} from={[edge, topY - t * rise - .06, topZ + t * run]} to={[edge, topY - t * rise + .73, topZ + t * run]} radius={.026} color={colors.metal} />)}
       </group>;
     })}
   </group>;
 }
 
 export function StaircaseAlongX({ topX, bottomX, yTop, yBottom, z, width = 1.52, steps = 18 }) {
-  const run = bottomX - topX;
-  const rise = yTop - yBottom;
-  return <group>
-    <Block position={[(topX + bottomX) / 2, (yTop + yBottom) / 2 - .13, z]} size={[Math.hypot(run, rise), .2, width + .06]} rotation={[0, 0, -Math.atan2(rise, run)]} color="#b7a891" />
-    {Array.from({ length: steps }, (_, index) => {
-      const t = (index + .5) / steps;
-      return <Block key={index} position={[topX + t * run, yTop - (index + 1) * rise / steps + .04, z]} size={[run / steps + .02, .11, width]} color={index % 2 ? '#f0dec1' : '#e2caa8'} />;
-    })}
-    {[-1, 1].map(side => {
-      const edgeZ = z + side * (width / 2 + .1);
-      return <group key={side}>
-        <Rod from={[topX, yTop + .65, edgeZ]} to={[bottomX, yBottom + .65, edgeZ]} radius={.044} color={colors.tealDark} />
-        {[0, .5, 1].map(t => <Rod key={t} from={[topX + t * run, yTop - t * rise + .1, edgeZ]} to={[topX + t * run, yTop - t * rise + .65, edgeZ]} radius={.032} color={colors.metal} />)}
-      </group>;
-    })}
+  return <group position={[topX, 0, z]} rotation={[0, Math.PI / 2, 0]}>
+    <Staircase x={0} topY={yTop} bottomY={yBottom} topZ={0} bottomZ={bottomX - topX} width={width} steps={steps} bottomOnFloor />
   </group>;
 }
 
@@ -97,13 +88,13 @@ function MovingTreads({ x, topY, bottomY, topZ, bottomZ, count, reducedMotion })
     const flow = clock.getElapsedTime() * .15;
     treads.current.forEach((mesh, i) => {
       if (!mesh) return;
-      const t = ((i / count + flow) % 1);
-      mesh.position.set(x, topY + (bottomY - topY) * t + .055, topZ + (bottomZ - topZ) * t);
+      const t = (((i + .5) / count + flow) % 1);
+      mesh.position.set(x, topY + (bottomY - topY) * t - .035, topZ + (bottomZ - topZ) * t);
     });
   });
   return <>{Array.from({ length: count }, (_, i) => {
-    const t = i / count;
-    return <Block key={i} ref={node => { treads.current[i] = node; }} position={[x, topY + (bottomY - topY) * t + .055, topZ + (bottomZ - topZ) * t]} size={[1.28, .055, .14]} color={i % 2 ? '#b5c8bd' : '#809f9a'} castShadow={false} />;
+    const t = (i + .5) / count;
+    return <Block key={i} ref={node => { treads.current[i] = node; }} position={[x, topY + (bottomY - topY) * t - .035, topZ + (bottomZ - topZ) * t]} size={[1.28, .07, Math.abs(bottomZ - topZ) / count + .015]} color={i % 2 ? '#b5c8bd' : '#809f9a'} castShadow={false} />;
   })}</>;
 }
 
@@ -113,7 +104,7 @@ export function Escalator({ x = 2.55, topY = .58, bottomY = -1.42, topZ = 1.38, 
   const length = Math.hypot(rise, run);
   const angle = Math.atan2(rise, run);
   return <group>
-    <Block position={[x, (topY + bottomY) / 2 - .06, (topZ + bottomZ) / 2]} size={[1.75, .22, length]} rotation={[angle, 0, 0]} color={colors.tealDark} />
+    <Block position={[x, (topY + bottomY) / 2 - .19, (topZ + bottomZ) / 2]} size={[1.75, .22, length]} rotation={[angle, 0, 0]} color={colors.tealDark} />
     <MovingTreads x={x} topY={topY} bottomY={bottomY} topZ={topZ} bottomZ={bottomZ} count={treadCount} reducedMotion={reducedMotion} />
     {[-1, 1].map(side => {
       const edge = x + side * .87;
@@ -124,6 +115,14 @@ export function Escalator({ x = 2.55, topY = .58, bottomY = -1.42, topZ = 1.38, 
       </group>;
     })}
   </group>;
+}
+
+function WalkwayRamp({ boundary, side }) {
+  const shape = useMemo(() => new Shape().moveTo(0, 0).lineTo(0, .075).lineTo(side * .3, 0).closePath(), [side]);
+  return <mesh position={[boundary, 0, -.65]} receiveShadow>
+    <extrudeGeometry args={[shape, { depth: 1.3, bevelEnabled: false }]} />
+    <meshStandardMaterial color={colors.stone} roughness={1} />
+  </mesh>;
 }
 
 export function MovingWalkway({ position = [.15, .65, -.4], length = 4.7, reducedMotion }) {
@@ -144,8 +143,8 @@ export function MovingWalkway({ position = [.15, .65, -.4], length = 4.7, reduce
       <Block position={[0, .55, z]} size={[length + .35, .07, .095]} color={colors.metal} />
       {[-length / 2, 0, length / 2].map(x => <Rod key={x} from={[x, .04, z]} to={[x, .55, z]} radius={.025} color={colors.metal} />)}
     </group>)}
-    <Block position={[-length / 2 - .16, .035, 0]} size={[.28, .08, 1.3]} color={colors.stone} />
-    <Block position={[length / 2 + .16, .035, 0]} size={[.28, .08, 1.3]} color={colors.stone} />
+    <WalkwayRamp boundary={-length / 2} side={-1} />
+    <WalkwayRamp boundary={length / 2} side={1} />
   </group>;
 }
 

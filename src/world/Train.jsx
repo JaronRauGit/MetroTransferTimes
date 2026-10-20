@@ -3,27 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
 import { Block, Sign, colors } from './Primitives.jsx';
-
-const cycleSeconds = 22;
-const startOffset = 5;
-const smooth = value => {
-  const t = Math.max(0, Math.min(1, value));
-  return t * t * (3 - 2 * t);
-};
-
-function trainPosition(phase) {
-  if (phase < 3) return -18 + 18 * smooth(phase / 3);
-  if (phase < 17) return 0;
-  if (phase < 20) return 18 * smooth((phase - 17) / 3);
-  return 18;
-}
-
-function doorOpening(phase) {
-  if (phase < 4 || phase > 16) return 0;
-  if (phase < 5) return smooth(phase - 4);
-  if (phase < 15) return 1;
-  return 1 - smooth(phase - 15);
-}
+import { trainCycleSeconds as cycleSeconds, trainPosition, doorOpening } from './trainSchedule.js';
 
 function DoorPair({ side, reducedMotion, phaseOffset }) {
   const left = useRef();
@@ -86,7 +66,7 @@ function TrainCar({ x, index, reducedMotion, phaseOffset, line, stripe }) {
   </group>;
 }
 
-export default function Train({ reducedMotion, position = [0, -1.7, 4.66], line = 'L3', stripe = colors.olive, phaseOffset = startOffset }) {
+export default function Train({ reducedMotion, position = [0, -.36, -2.22], line = 'L3', stripe = colors.olive, phaseOffset = 6 }) {
   const train = useRef();
   const planes = useMemo(() => [new THREE.Plane(), new THREE.Plane()], []);
   const origin = useMemo(() => new THREE.Vector3(), []);
@@ -111,10 +91,10 @@ export default function Train({ reducedMotion, position = [0, -1.7, 4.66], line 
     platform.updateWorldMatrix(true, false);
     origin.setFromMatrixPosition(platform.matrixWorld);
     axis.set(1, 0, 0).transformDirection(platform.matrixWorld);
-    planes[0].setFromNormalAndCoplanarPoint(axis, edge.copy(origin).addScaledVector(axis, -7.08));
-    planes[1].setFromNormalAndCoplanarPoint(oppositeAxis.copy(axis).negate(), edge.copy(origin).addScaledVector(axis, 7.08));
+    planes[0].setFromNormalAndCoplanarPoint(axis, edge.copy(origin).addScaledVector(axis, -9.2));
+    planes[1].setFromNormalAndCoplanarPoint(oppositeAxis.copy(axis).negate(), edge.copy(origin).addScaledVector(axis, 9.2));
   });
-  return <group ref={train} position={position}>
+  return <group ref={train} position={position} userData={{ collisionRole: 'train' }}>
     {[-4.83, -1.61, 1.61, 4.83].map((x, index) => <TrainCar key={x} x={x} index={index} reducedMotion={reducedMotion} phaseOffset={phaseOffset} line={line} stripe={stripe} />)}
   </group>;
 }

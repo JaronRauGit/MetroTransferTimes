@@ -4,8 +4,8 @@ import { lineColor, lineOptions } from '../world/lineCatalog.js';
 
 const fields = [
   { id: 'walkDistance', label: 'Tunnel walk', unit: 'm', glyph: '→' },
-  { id: 'escalatorDistance', label: 'Escalator', unit: 'steps', glyph: '↗' },
-  { id: 'numSteps', label: 'Stairs', unit: 'steps', glyph: '▤' },
+  { id: 'escalatorDistance', label: 'Escalator', unit: 'm', glyph: '↗' },
+  { id: 'stairDistance', label: 'Stairs', unit: 'm', glyph: '▤' },
   { id: 'walkwayLength', label: 'Moving walkway', unit: 'm', glyph: '⇢' },
 ];
 
@@ -79,6 +79,6 @@ export default function CalculatorPanel({ values, station, onValuesChange, onSta
         <div className="example-row"><span>TRY</span><button type="button" onClick={() => usePreset('quick')}>Short change</button><button type="button" onClick={() => usePreset('long')}>Long connection</button></div>
       </div>
     </div>
-    <details className="method"><summary>How is the time estimated?</summary><p>Walking metres ÷ 1.3 m/s, escalator steps ÷ 1.5 steps/s, stair steps ÷ 1.9 steps/s, and moving walkway metres ÷ 0.5 m/s. We add those times together. The 3D distances are schematic.</p></details>
+    <details className="method"><summary>How is the time estimated?</summary><p>All lengths are in metres. Walking: 1.3 m/s · standing on an escalator: 0.5 m/s · stairs: 0.65 m/s · walking on a moving walkway: 1.8 m/s (1.3 walking + 0.5 belt). We add the four segment times. The miniature uses a compressed scale.</p></details>
   </section>;
 }

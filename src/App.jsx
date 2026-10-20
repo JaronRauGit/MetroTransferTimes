@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import StationWorld from './world/StationWorld.jsx';
 import CalculatorPanel from './components/CalculatorPanel.jsx';
-import { emptyJourney } from './calculator.js';
+import { defaultJourney } from './calculator.js';
 
 function useReducedMotion() {
   const [reduced, setReduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -16,7 +16,7 @@ function useReducedMotion() {
 }
 
 export default function App() {
-  const [values, setValues] = useState({ ...emptyJourney });
+  const [values, setValues] = useState({ ...defaultJourney });
   const [station, setStation] = useState({ name: 'Verdaguer', fromLine: 'L4', toLine: 'L5' });
   const [journey, setJourney] = useState(null);
   const [journeyRun, setJourneyRun] = useState(0);

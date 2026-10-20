@@ -10,7 +10,7 @@ export function Traveller({ position, shirt = colors.coral, skin = '#c99572', tr
     group.current.position.y = position[1] + Math.abs(Math.sin(time)) * .045;
     group.current.position.x = position[0] + Math.sin(time * .42) * walk;
   });
-  return <group ref={group} position={position} scale={scale}>
+  return <group ref={group} position={position} scale={scale} userData={{ collisionRole: 'person' }}>
     <mesh position={[0, .81, 0]} castShadow><sphereGeometry args={[.14, 8, 6]} /><meshStandardMaterial color={skin} roughness={1} /></mesh>
     <mesh position={[0, .47, 0]} castShadow><cylinderGeometry args={[.17, .21, .48, 6]} /><meshStandardMaterial color={shirt} flatShading roughness={.95} /></mesh>
     {[-.09, .09].map(x => <Block key={x} position={[x, .16, 0]} size={[.11, .32, .12]} color={trousers} />)}
@@ -26,13 +26,13 @@ export function Planter({ position, width = .8 }) {
   </group>;
 }
 
-export function Turnstiles({ position }) {
-  return <group position={position}>
-    {[0, 1, 2].map(index => <group key={index} position={[index * .7, 0, 0]}>
+export function Turnstiles({ position, rotation = [0, 0, 0] }) {
+  return <group position={position} rotation={rotation}>
+    {[0, 1, 2].map(index => <group key={index} position={[(index - 1) * .72, 0, 0]}>
       <Block position={[0, .45, 0]} size={[.24, .9, .72]} color={colors.tealDark} />
       <Block position={[0, .91, 0]} size={[.27, .08, .76]} color={colors.metal} />
       <Block position={[0, .96, .18]} size={[.13, .02, .16]} color={index === 1 ? '#e7b471' : '#a3cfb0'} castShadow={false} />
-      <Rod from={[.12, .55, .22]} to={[.54, .55, .22]} radius={.025} color={colors.metal} />
+      {index < 2 && <Block position={[.13, .55, 0]} size={[.02, .38, .34]} color="#a9c7be" transparent opacity={.6} castShadow={false} />}
     </group>)}
   </group>;
 }
