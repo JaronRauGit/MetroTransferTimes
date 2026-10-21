@@ -4,6 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#dce9e3" />
+    <script>
+      const localHour = new Date().getHours();
+      document.documentElement.dataset.theme = localHour < 7 || localHour >= 19 ? 'dark' : 'light';
+      document.querySelector('meta[name="theme-color"]').content = document.documentElement.dataset.theme === 'dark' ? '#101e2a' : '#dce9e3';
+    </script>
+    <style>html{background:#dce9e3}html[data-theme="dark"]{background:#101e2a;color-scheme:dark}</style>
     <meta name="description" content="Explore a miniature Barcelona metro interchange and shape its tunnel, walkways and transfer time." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Between the Lines — Barcelona Metro Transfer</title>

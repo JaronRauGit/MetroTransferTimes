@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Shape } from 'three';
 import { useWorldMotion } from './WorldMotion.jsx';
-import { Block, Rod, Sign, colors } from './Primitives.jsx';
+import { Block, Rod, Sign, WindowPane, colors } from './Primitives.jsx';
 
 export function Building({ position, width, depth, height, color = colors.cream, roof = colors.terracotta, flat = false }) {
   const [x, ground, z] = position;
@@ -21,13 +21,13 @@ export function Building({ position, width, depth, height, color = colors.cream,
     {[-.28, .28].map((offset, index) => <group key={index}>
       {[.36, .7].map((level, levelIndex) => <group key={levelIndex}>
         <Block position={[x + offset * width, ground + height * level, front + .035]} size={[.37, .49, .075]} color={colors.tealDark} />
-        <Block position={[x + offset * width, ground + height * level + .015, front + .083]} size={[.27, .39, .025]} color={colors.glass} roughness={.26} />
+        <WindowPane lit={(index + levelIndex) % 3 !== 0} position={[x + offset * width, ground + height * level + .015, front + .083]} size={[.27, .39, .025]} color={colors.glass} roughness={.26} />
         <Block position={[x + offset * width, ground + height * level - .3, front + .2]} size={[.65, .065, .42]} color={colors.stone} />
         <Rod from={[x + offset * width - .28, ground + height * level - .05, front + .39]} to={[x + offset * width + .28, ground + height * level - .05, front + .39]} radius={.022} color={colors.rail} />
       </group>)}
     </group>)}
     <Block position={[x + width / 2 + .025, ground + height * .49, z]} size={[.075, .49, .53]} color={colors.tealDark} />
-    <Block position={[x + width / 2 + .065, ground + height * .49, z]} size={[.025, .38, .42]} color={colors.glass} roughness={.28} />
+    <WindowPane position={[x + width / 2 + .065, ground + height * .49, z]} size={[.025, .38, .42]} color={colors.glass} roughness={.28} />
   </group>;
 }
 

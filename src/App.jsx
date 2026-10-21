@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import StationWorld from './world/StationWorld.jsx';
 import CalculatorPanel from './components/CalculatorPanel.jsx';
@@ -7,6 +7,11 @@ import { defaultStationPreset } from './stationPresets.js';
 import useValidation from './useValidation.js';
 import useCalculation from './useCalculation.js';
 import { useCompactDisplay, useViewportHeight } from './useDisplay.js';
+import useAppearance from './useAppearance.js';
+import LaunchScreen, { useLaunchScreen } from './components/LaunchScreen.jsx';
+import ThemeControl from './components/ThemeControl.jsx';
+import SceneBoundary from './components/SceneBoundary.jsx';
+import { SceneReady } from './world/WorldAppearance.jsx';
 
 function useReducedMotion() {
   const [reduced, setReduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -32,20 +37,27 @@ export default function App() {
   const [sceneFailed, setSceneFailed] = useState(false);
   const reducedMotion = useReducedMotion();
 
+  const appearance = useAppearance();
+  const [sceneReady, setSceneReady] = useState(false);
+  const markReady = useCallback(() => setSceneReady(true), []);
+  const launchPhase = useLaunchScreen(sceneReady || sceneFailed, reducedMotion);
+  const launching = launchPhase !== 'finished';
   const calculation = useCalculation(reducedMotion);
 
   function resetWork() { validation.cancel(); calculation.cancel(); }
 
-  return <main className="experience">
+  return <><main className={`experience${launching ? ' is-launching' : ''}`} inert={launching ? true : undefined} aria-hidden={launching ? true : undefined}>
     <div className="world-canvas" aria-label="Three-dimensional Barcelona metro cutaway with street and two crossing underground platforms">
-      {!sceneFailed && <Canvas shadows="percentage" dpr={[1, compact ? 1.25 : 1.6]} gl={{ antialias: true, powerPreference: 'high-performance' }} orthographic camera={{ position: [23, 18.96, 22.85], zoom: 40, near: .1, far: 130 }} onCreated={({ gl }) => { gl.toneMappingExposure = 1.08; gl.localClippingEnabled = true; }} onError={() => setSceneFailed(true)}>
-        <StationWorld values={values} station={station} validation={validation.run} simulation={calculation.run} compact={compact} reducedMotion={reducedMotion} />
-      </Canvas>}
+      {!sceneFailed && <SceneBoundary onFailure={() => setSceneFailed(true)}><Canvas shadows="percentage" dpr={[1, compact ? 1.25 : 1.6]} gl={{ antialias: true, powerPreference: 'high-performance' }} orthographic camera={{ position: [23, 18.96, 22.85], zoom: 40, near: .1, far: 130 }} onCreated={({ gl }) => { gl.toneMappingExposure = 1.08; gl.localClippingEnabled = true; }} onError={() => setSceneFailed(true)}>
+        <StationWorld values={values} station={station} validation={validation.run} simulation={calculation.run} compact={compact} reducedMotion={reducedMotion} theme={appearance.theme} launching={launching} />
+        <SceneReady onReady={markReady} />
+      </Canvas></SceneBoundary>}
       {sceneFailed && <p className="scene-fallback">The 3D station could not start in this browser. The calculator is still available below.</p>}
       <header className="scene-header">
         <div className="wordmark"><span className="wordmark-symbol">M</span><div><strong>between<span>/</span>the lines</strong><small>BARCELONA METRO MINIATURE</small></div></div>
         <SceneLabels station={station} editable={mode === 'custom' && !calculation.running} disabled={calculation.running} onChange={next => { resetWork(); setCustomStation(next); }} />
       </header>
+      <ThemeControl appearance={appearance} />
       <div className="scene-instruction"><span aria-hidden="true">✦</span> DRAG TO TURN <i>·</i> <span className="mouse-instruction">SCROLL TO ZOOM</span><span className="touch-instruction">PINCH TO ZOOM</span></div>
     </div>
     <CalculatorPanel mode={mode} values={values} station={station}
@@ -53,5 +65,5 @@ export default function App() {
       onMappedChange={next => { resetWork(); setMappedRoute(next); setMode('mapped'); }}
       onValuesChange={next => { resetWork(); setCustomValues(next); }}
       validation={validation} calculation={calculation} />
-  </main>;
+  </main>{launching && <LaunchScreen phase={launchPhase} />}</>;
 }

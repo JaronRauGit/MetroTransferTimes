@@ -1,4 +1,4 @@
-import { Block, FloorSlab, Rod, Sign, colors } from './Primitives.jsx';
+import { Block, FloorSlab, Rod, Sign, WindowPane, colors } from './Primitives.jsx';
 import { Building, LowPolyTree, Palm, StaircaseAlongX } from './Architecture.jsx';
 import StreetMobility from './StreetMobility.jsx';
 import { Turnstiles } from './Details.jsx';
@@ -14,7 +14,7 @@ function CasaFacade({ x }) {
     </mesh>)}
     {[-1.12, 0, 1.12].map((offset, column) => [1.02, 2.17, 3.23].map((height, row) => <group key={`${offset}-${height}`}>
       <Block position={[x + offset, y + height, z + 1.14]} size={[.64, .67, .09]} color={colors.tealDark} />
-      <Block position={[x + offset, y + height, z + 1.19]} size={[.49, .55, .02]} color="#7babb0" roughness={.3} />
+      <WindowPane lit={(column + row) % 3 !== 0} position={[x + offset, y + height, z + 1.19]} size={[.49, .55, .02]} color="#7babb0" roughness={.3} />
       <mesh position={[x + offset, y + height + .33, z + 1.19]} castShadow><sphereGeometry args={[.32, 9, 5]} /><meshStandardMaterial color="#d0b995" roughness={1} /></mesh>
       <Block position={[x + offset, y + height - .39, z + 1.35]} size={[.82, .09, .4]} color="#c6ae91" />
       <Rod from={[x + offset - .35, y + height - .12, z + 1.54]} to={[x + offset + .35, y + height - .12, z + 1.54]} radius={.03} color="#496d68" />

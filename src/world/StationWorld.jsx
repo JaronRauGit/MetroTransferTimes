@@ -14,6 +14,8 @@ import Train from './Train.jsx';
 import CreatorsNook from './CreatorsNook.jsx';
 import { WorldMotion } from './WorldMotion.jsx';
 import MonochromeWorld from './MonochromeWorld.jsx';
+import { worldPalettes } from '../appearance.js';
+import { StationNightLights, WorldNightContext } from './WorldAppearance.jsx';
 import TransferSimulation from './TransferSimulation.jsx';
 import { creatorsNookBounds } from './creatorsLayout.js';
 import { getStationLayout, getStationShape, stationDimensions as d } from './stationLayout.js';
@@ -35,7 +37,7 @@ function framingPoints(layout) {
   return points;
 }
 
-function SceneCamera({ layout, reducedMotion, simulation, editingLabels }) {
+function SceneCamera({ layout, reducedMotion, simulation, editingLabels, launching }) {
   const controls = useRef();
   const goal = useRef(null);
   const savedView = useRef(null);
@@ -63,8 +65,8 @@ function SceneCamera({ layout, reducedMotion, simulation, editingLabels }) {
     const mobile = size.width < 900;
     const header = document.querySelector('.scene-header')?.getBoundingClientRect();
     const world = document.querySelector('.world-canvas')?.getBoundingClientRect();
-    const headerSpace = header && world ? header.bottom - world.top + 12 : 0;
-    const side = mobile ? 12 : 32, top = Math.max(headerSpace, mobile ? editingLabels ? 128 : 88 : 72), bottom = mobile ? 42 : 30;
+    const headerSpace = !launching && header && world ? header.bottom - world.top + 12 : 0;
+    const side = mobile ? 12 : 32, top = launching ? 30 : Math.max(headerSpace, mobile ? editingLabels ? 128 : 88 : 72), bottom = launching ? Math.min(190, size.height * .3) : mobile ? 42 : 30;
     const fit = Math.min(Math.max(40, size.width - side * 2) / (maxX - minX), Math.max(40, size.height - top - bottom) / (maxY - minY));
     center.addScaledVector(right, (minX + maxX) / 2).addScaledVector(up, (minY + maxY) / 2 + (top - bottom) / (2 * fit));
     if (!goal.current || reducedMotion) {
@@ -79,7 +81,7 @@ function SceneCamera({ layout, reducedMotion, simulation, editingLabels }) {
     orbit.maxZoom = fit * 4;
     goal.current = { center: restoreFraming ? restore.center : center, direction, zoom: restoreFraming ? restore.zoom : Math.max(1, fit), active: !reducedMotion };
     if (restore) savedView.current = null;
-  }, [camera, layout, size.width, size.height, reducedMotion, active, editingLabels]);
+  }, [camera, layout, size.width, size.height, reducedMotion, active, editingLabels, launching]);
   useFrame((_, delta) => {
     const target = goal.current, orbit = controls.current;
     if (!target?.active || !orbit) return;
@@ -218,19 +220,22 @@ function CutawayEarth({ layout: l }) {
   </group>;
 }
 
-function StationWorld({ values, station, validation, simulation, reducedMotion, compact }) {
+function StationWorld({ values, station, validation, simulation, reducedMotion, compact, theme = 'light', launching }) {
   const { size } = useThree();
   const targetLayout = useMemo(() => getStationLayout(values, getStationShape(values, station.presetId)), [values, station.presetId]);
   const { layout, transitioning } = useStationLayout(values, reducedMotion, station.presetId);
   const mobile = compact || size.width < 700;
-  return <WorldMotion simulation={simulation} reducedMotion={reducedMotion}>
-    <color attach="background" args={['#dce9e3']} />
-    <fog attach="fog" args={['#dce9e3', 75, 130]} />
-    <ambientLight intensity={.68} />
-    <hemisphereLight args={['#fff3df', '#91a49b', 2]} />
-    <directionalLight position={[-10, 22, 13]} intensity={2.5} color="#fff3dc" castShadow shadow-mapSize={mobile ? [1024, 1024] : [2048, 2048]} shadow-camera-left={-32} shadow-camera-right={32} shadow-camera-top={32} shadow-camera-bottom={-32} shadow-camera-near={1} shadow-camera-far={78} shadow-normalBias={.035} shadow-radius={3} />
-    <MonochromeWorld>
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layout.groundY - .85, 0]} receiveShadow><planeGeometry args={[200, 200]} /><meshStandardMaterial color="#d8e4d9" roughness={1} /></mesh>
+  const night = theme === 'dark';
+  const palette = worldPalettes[theme];
+  return <WorldNightContext.Provider value={night}><WorldMotion simulation={simulation} reducedMotion={reducedMotion}>
+    <color attach="background" args={[palette.background]} />
+    <fog attach="fog" args={[palette.background, 75, 130]} />
+    <ambientLight intensity={night ? .48 : .68} />
+    <hemisphereLight args={[palette.sky, palette.bounce, night ? 1.35 : 2]} />
+    <directionalLight position={[-10, 22, 13]} intensity={night ? 1.1 : 2.5} color={palette.sunlight} castShadow shadow-mapSize={mobile ? [1024, 1024] : [2048, 2048]} shadow-camera-left={-32} shadow-camera-right={32} shadow-camera-top={32} shadow-camera-bottom={-32} shadow-camera-near={1} shadow-camera-far={78} shadow-normalBias={.035} shadow-radius={3} />
+    {night && <StationNightLights layout={layout} />}
+    <MonochromeWorld theme={theme}>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layout.groundY - .85, 0]} receiveShadow><planeGeometry args={[200, 200]} /><meshStandardMaterial color={palette.ground} roughness={1} /></mesh>
     <ContactShadows key={transitioning ? 'resizing' : layout.groundY} position={[0, layout.groundY - .83, 0]} opacity={.2} scale={58} blur={2.9} far={10} resolution={mobile ? 256 : 512} frames={transitioning ? Infinity : 1} color="#51675f" />
     <group>
       <CutawayEarth layout={layout} />
@@ -244,9 +249,9 @@ function StationWorld({ values, station, validation, simulation, reducedMotion, 
     </group>
     </MonochromeWorld>
     <TransferSimulation layout={layout} station={station} simulation={simulation} reducedMotion={reducedMotion} />
-    <SceneCamera layout={targetLayout} reducedMotion={reducedMotion} simulation={simulation} editingLabels={!station.presetId && simulation?.status !== 'running'} />
+    <SceneCamera layout={targetLayout} reducedMotion={reducedMotion} simulation={simulation} launching={launching} editingLabels={!station.presetId && simulation?.status !== 'running'} />
     <EffectComposer multisampling={0}><N8AO halfRes quality={mobile ? 'performance' : 'low'} aoRadius={.66} intensity={1.35} distanceFalloff={.8} /></EffectComposer>
-  </WorldMotion>;
+  </WorldMotion></WorldNightContext.Provider>;
 }
 
 export default memo(StationWorld);

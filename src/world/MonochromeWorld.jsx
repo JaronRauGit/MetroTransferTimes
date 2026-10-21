@@ -1,18 +1,19 @@
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Color } from 'three';
+import { worldPalettes } from '../appearance.js';
 import { useWorldMotion } from './WorldMotion.jsx';
 
 // Desaturate the final lit material, including canvas signs and vertex colours.
 // The highlighted trains and traveller live outside this group.
-export default function MonochromeWorld({ children }) {
+export default function MonochromeWorld({ children, theme = 'light' }) {
   const root = useRef();
   const painted = useRef(new WeakSet());
   const uniform = useMemo(() => ({ value: 0 }), []);
   const motion = useWorldMotion();
   const { scene } = useThree();
-  const colour = useMemo(() => new Color('#dce9e3'), []);
-  const grey = useMemo(() => new Color('#e2e4e1'), []);
+  const colour = useMemo(() => new Color(worldPalettes[theme].background), [theme]);
+  const grey = useMemo(() => new Color(worldPalettes[theme].monochrome), [theme]);
   useLayoutEffect(() => {
     root.current.traverse(object => {
       if (!object.isMesh || !object.material) return;
