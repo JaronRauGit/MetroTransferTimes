@@ -52,7 +52,7 @@ export default function TransferSimulation({ layout: l, station, simulation, red
     </group>
     <group ref={passenger} name="featured-passenger" scale={1} visible={false}>
       <PassengerClock />
-      <Person shirt="#ec7652" skin="#bf8863" trousers="#365b69" hair="#45382e" movement={movement} hero reducedMotion={reducedMotion} />
+      <Person presentation={simulation.character} shirt="#ec7652" skin="#bf8863" trousers="#365b69" hair="#45382e" movement={movement} hero reducedMotion={reducedMotion} />
       <mesh position={[0, 1.45, 0]} rotation={[0, 0, Math.PI]}><coneGeometry args={[.105, .2, 8]} /><meshBasicMaterial color="#f58258" /></mesh>
       <pointLight position={[0, 1, 0]} intensity={1.2} distance={2.5} color="#ffcd91" />
     </group>

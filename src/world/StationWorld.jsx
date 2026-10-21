@@ -16,7 +16,7 @@ import { WorldMotion } from './WorldMotion.jsx';
 import MonochromeWorld from './MonochromeWorld.jsx';
 import TransferSimulation from './TransferSimulation.jsx';
 import { creatorsNookBounds } from './creatorsLayout.js';
-import { getStationLayout, stationDimensions as d } from './stationLayout.js';
+import { getStationLayout, getStationShape, stationDimensions as d } from './stationLayout.js';
 import { lineColor, stationLabel } from './lineCatalog.js';
 
 function baseOutline(layout) {
@@ -214,8 +214,8 @@ function CutawayEarth({ layout: l }) {
 
 function StationWorld({ values, station, validation, simulation, reducedMotion }) {
   const { size } = useThree();
-  const targetLayout = useMemo(() => getStationLayout(values), [values]);
-  const { layout, transitioning } = useStationLayout(values, reducedMotion);
+  const targetLayout = useMemo(() => getStationLayout(values, getStationShape(values, station.presetId)), [values, station.presetId]);
+  const { layout, transitioning } = useStationLayout(values, reducedMotion, station.presetId);
   const mobile = size.width < 700;
   return <WorldMotion simulation={simulation} reducedMotion={reducedMotion}>
     <color attach="background" args={['#dce9e3']} />

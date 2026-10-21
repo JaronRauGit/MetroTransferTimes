@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getStationLayout, getStationShape, interpolateStationShape } from './stationLayout.js';
 
-export default function useStationLayout(values, reducedMotion) {
-  const target = useMemo(() => getStationShape(values), [values]);
+export default function useStationLayout(values, reducedMotion, presetId) {
+  const target = useMemo(() => getStationShape(values, presetId), [values, presetId]);
   const current = useRef(target);
   const [shape, setShape] = useState(target);
   const [transitioning, setTransitioning] = useState(false);

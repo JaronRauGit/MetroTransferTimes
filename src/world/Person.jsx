@@ -4,7 +4,7 @@ import { Block } from './Primitives.jsx';
 import { useWorldMotion } from './WorldMotion.jsx';
 
 // One articulated miniature shared by commuters and the featured traveller.
-export default function Person({ shirt = '#c47a62', skin = '#c99572', trousers = '#405b66', hair = '#49382e', variant = 0, movement, hero = false, reducedMotion }) {
+export default function Person({ shirt = '#c47a62', skin = '#c99572', trousers = '#405b66', hair = '#49382e', variant = 0, movement, hero = false, presentation = 'man', reducedMotion }) {
   const torso = useRef(), head = useRef(), limbs = useRef([]);
   const motion = useWorldMotion();
   useFrame((_, delta) => {
@@ -26,16 +26,21 @@ export default function Person({ shirt = '#c47a62', skin = '#c99572', trousers =
       limb.rotation.x = excited ? -.15 : walking ? stride * sign * (i < 2 ? .45 : -.36) : i === 3 && variant % 3 === 1 ? -.6 + Math.sin(t) * .07 : .04;
     });
   });
-  return <group ref={torso}>
+  return <group ref={torso} name={hero ? 'featured-person' : undefined} userData={hero ? { presentation } : undefined}>
     <group ref={head} position={[0, .85, 0]}>
       <mesh castShadow><sphereGeometry args={[.15, 9, 7]} /><meshStandardMaterial color={skin} roughness={1} flatShading /></mesh>
       <mesh position={[0, .085, -.025]} scale={[1.02, .55, 1.02]} castShadow><sphereGeometry args={[.154, 8, 6]} /><meshStandardMaterial color={hair} roughness={1} flatShading /></mesh>
+      {presentation === 'woman' && <>
+        <mesh position={[0, .04, -.105]} scale={[.9, .75, .6]} castShadow><sphereGeometry args={[.155, 8, 6]} /><meshStandardMaterial color={hair} roughness={1} flatShading /></mesh>
+        <mesh position={[0, -.025, -.205]} scale={[.8, 1.55, .8]} castShadow><sphereGeometry args={[.085, 7, 6]} /><meshStandardMaterial color={hair} roughness={1} flatShading /></mesh>
+        <Block position={[0, .015, -.19]} size={[.12, .035, .04]} color="#dfb775" />
+      </>}
       {[-1, 1].map(side => <Block key={side} position={[side * .052, .015, .139]} size={[.018, .018, .014]} color="#3a3531" castShadow={false} />)}
       <Block position={[0, -.025, .15]} size={[.028, .035, .032]} color={skin} />
       {variant % 4 === 2 && <Block position={[0, .14, .025]} size={[.28, .045, .32]} color={shirt} />}
       {variant % 4 === 3 && <mesh position={[0, -.045, -.12]} scale={[1, 1.35, .7]} castShadow><sphereGeometry args={[.14, 7, 5]} /><meshStandardMaterial color={hair} roughness={1} /></mesh>}
     </group>
-    <mesh position={[0, .51, 0]} castShadow><cylinderGeometry args={[.16, .19, .43, 6]} /><meshStandardMaterial color={shirt} emissive={hero ? '#c05b32' : '#000000'} emissiveIntensity={.12} roughness={1} flatShading /></mesh>
+    <mesh position={[0, .51, 0]} castShadow><cylinderGeometry args={[presentation === 'woman' ? .145 : .16, presentation === 'woman' ? .175 : .19, .43, 6]} /><meshStandardMaterial color={shirt} emissive={hero ? '#c05b32' : '#000000'} emissiveIntensity={.12} roughness={1} flatShading /></mesh>
     <Block position={[0, .5, .166]} size={[.018, .33, .015]} color={hero ? '#ffe6bc' : shirt} castShadow={false} />
     {[-1, 1].map((side, i) => <group key={side}>
       <group position={[side * .09, .3, 0]} ref={value => { limbs.current[i] = value; }}>

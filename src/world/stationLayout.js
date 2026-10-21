@@ -1,4 +1,5 @@
 import { defaultJourney } from '../calculator.js';
+import { getStationPreset, platformOptions, stationPresets } from '../stationPresets.js';
 
 export const stationDimensions = Object.freeze({
   platformHalfLength: 7.3,
@@ -17,11 +18,26 @@ const amount = value => Number.isFinite(Number(value)) ? Math.max(0, Number(valu
 const compressed = (value, scale) => -Math.expm1(-value / scale);
 const box = (name, x, y, z) => ({ name, min: [x[0], y[0], z[0]], max: [x[1], y[1], z[1]] });
 
+// Give the measured choices within each station a readable visual range.
+// This only exaggerates the miniature; the original calculator inputs stay intact.
+const mappedTunnelRanges = Object.fromEntries(stationPresets.map(station => {
+  const lengths = platformOptions.flatMap(from => platformOptions.filter(to => to.line !== from.line).map(to => {
+    const { values } = getStationPreset(station.id, from.id, to.id);
+    return amount(values.walkDistance) + amount(values.walkwayLength);
+  }));
+  return [station.id, { min: Math.min(...lengths), max: Math.max(...lengths) }];
+}));
+
 // Inputs retain their original units: walking/belt metres and stair/escalator steps.
 // These bounded controls set schematic geometry, not a conversion to metres.
-export function getStationShape(values = defaultJourney) {
+export function getStationShape(values = defaultJourney, presetId) {
+  const distance = amount(values.walkDistance) + amount(values.walkwayLength);
+  const range = mappedTunnelRanges[presetId];
+  const tunnel = range && range.max > range.min
+    ? .48 + .38 * Math.max(0, Math.min(1, (distance - range.min) / (range.max - range.min)))
+    : compressed(distance, 260);
   return {
-    tunnel: compressed(amount(values.walkDistance) + amount(values.walkwayLength), 260),
+    tunnel,
     escalator: compressed(amount(values.escalatorDistance), 45),
     stairs: compressed(amount(values.numSteps), 40),
     walkway: amount(values.walkwayLength) > 0 ? 1.2 + 5.6 * compressed(amount(values.walkwayLength), 60) : 0,

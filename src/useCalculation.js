@@ -27,7 +27,7 @@ export default function useCalculation(reducedMotion) {
     const next = calculateTransfer(values);
     if (reducedMotion || next.seconds === 0) { current.current = null; setRun(null); setResult(next); return; }
     setResult(null);
-    const nextRun = { id: ++sequence.current, startedAt: Date.now(), status: 'running', values: { ...values }, station: { ...station }, result: next };
+    const nextRun = { id: ++sequence.current, startedAt: Date.now(), status: 'running', character: Math.random() < .5 ? 'man' : 'woman', values: { ...values }, station: { ...station }, result: next };
     current.current = nextRun;
     setRun(nextRun);
   }

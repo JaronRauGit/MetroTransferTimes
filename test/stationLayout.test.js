@@ -92,3 +92,26 @@ test('commuter routes stay off the tracks except while boarding and reach open d
     }
   }
 });
+
+test('mapped tunnel lengths visibly separate measured choices and remain connected throughout resizing', async () => {
+  const { getStationPreset, platformOptions, stationPresets } = await import('../src/stationPresets.js');
+  const { getStationShape, interpolateStationShape } = await import('../src/world/stationLayout.js');
+  for (const station of stationPresets) {
+    const routes = platformOptions.flatMap(from => platformOptions.filter(to => to.line !== from.line).map(to => getStationPreset(station.id, from.id, to.id)));
+    routes.sort((a, b) => Number(a.values.walkDistance) + Number(a.values.walkwayLength) - Number(b.values.walkDistance) - Number(b.values.walkwayLength));
+    const lengths = routes.map(route => getStationLayout(route.values, getStationShape(route.values, station.id)).corridorLength);
+    assert.ok(lengths.at(-1) - lengths[0] > 5, `${station.name}: mapped choices should visibly resize the passage`);
+    for (let i = 1; i < lengths.length; i++) assert.ok(lengths[i] >= lengths[i - 1]);
+    const first = routes[0], last = routes.at(-1);
+    const unamplifiedSpread = getStationLayout(last.values).corridorLength - getStationLayout(first.values).corridorLength;
+    assert.ok(lengths.at(-1) - lengths[0] > unamplifiedSpread * 5);
+    for (let t = 0; t <= 1; t += .05) {
+      const shape = interpolateStationShape(getStationShape(first.values, station.id), getStationShape(last.values, station.id), t);
+      const layout = getStationLayout(last.values, shape);
+      assert.ok(layout.corridorLength >= 20 && layout.corridorLength < 29);
+      for (const train of layout.trainEnvelopes) for (const floor of layout.walkingVolumes) assert.equal(volumesIntersect(train, floor), false);
+      assert.equal(layout.lowerDescent.x, layout.lowerX);
+      assert.ok(layout.walkwayEndX < layout.lowerX - .65);
+    }
+  }
+});
