@@ -1,20 +1,20 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
+import Person from './Person.jsx';
+import { useWorldMotion } from './WorldMotion.jsx';
 import { Block, Rod, Sign, colors } from './Primitives.jsx';
 
 export function Traveller({ position, shirt = colors.coral, skin = '#c99572', trousers = '#475f61', phase = 0, walk = 0, reducedMotion = false, scale = 1 }) {
   const group = useRef();
+  const motion = useWorldMotion();
   useFrame(({ clock }) => {
     if (!group.current || reducedMotion) return;
-    const time = clock.elapsedTime * 1.7 + phase;
+    const time = motion.current.time * 1.7 + phase;
     group.current.position.y = position[1] + Math.abs(Math.sin(time)) * .045;
     group.current.position.x = position[0] + Math.sin(time * .42) * walk;
   });
   return <group ref={group} position={position} scale={scale} userData={{ collisionRole: 'person' }}>
-    <mesh position={[0, .81, 0]} castShadow><sphereGeometry args={[.14, 8, 6]} /><meshStandardMaterial color={skin} roughness={1} /></mesh>
-    <mesh position={[0, .47, 0]} castShadow><cylinderGeometry args={[.17, .21, .48, 6]} /><meshStandardMaterial color={shirt} flatShading roughness={.95} /></mesh>
-    {[-.09, .09].map(x => <Block key={x} position={[x, .16, 0]} size={[.11, .32, .12]} color={trousers} />)}
-    <Block position={[.22, .5, 0]} size={[.1, .35, .11]} color={skin} />
+    <Person shirt={shirt} skin={skin} trousers={trousers} variant={Math.round(phase * 2)} reducedMotion={reducedMotion} />
   </group>;
 }
 

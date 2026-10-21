@@ -12,6 +12,9 @@ import ValidationRoute from './ValidationRoute.jsx';
 import useStationLayout from './useStationLayout.js';
 import Train from './Train.jsx';
 import CreatorsNook from './CreatorsNook.jsx';
+import { WorldMotion } from './WorldMotion.jsx';
+import MonochromeWorld from './MonochromeWorld.jsx';
+import TransferSimulation from './TransferSimulation.jsx';
 import { creatorsNookBounds } from './creatorsLayout.js';
 import { getStationLayout, stationDimensions as d } from './stationLayout.js';
 import { lineColor, stationLabel } from './lineCatalog.js';
@@ -32,15 +35,19 @@ function framingPoints(layout) {
   return points;
 }
 
-function SceneCamera({ layout, reducedMotion }) {
+function SceneCamera({ layout, reducedMotion, simulation }) {
   const controls = useRef();
   const goal = useRef(null);
+  const savedView = useRef(null);
+  const active = simulation?.status === 'running';
   const { camera, size } = useThree();
   useLayoutEffect(() => {
     if (!controls.current) return;
     const orbit = controls.current;
-    const direction = camera.position.clone().sub(orbit.target).normalize();
-    const points = framingPoints(layout);
+    if (active && !savedView.current) savedView.current = { center: orbit.target.clone(), zoom: camera.zoom, direction: camera.position.clone().sub(orbit.target).normalize() };
+    const restore = !active ? savedView.current : null;
+    const direction = active ? new THREE.Vector3(1, .82, 1).normalize() : restore?.direction ?? camera.position.clone().sub(orbit.target).normalize();
+    const points = active ? layout.walkingVolumes.flatMap(volume => [new THREE.Vector3(...volume.min), new THREE.Vector3(...volume.max)]).concat([new THREE.Vector3(layout.upperX - 8, layout.upperY + 2, -4), new THREE.Vector3(layout.lowerX + 1, layout.lowerY, 9)]) : framingPoints(layout);
     const center = new THREE.Box3().setFromPoints(points).getCenter(new THREE.Vector3());
     const probe = camera.clone();
     probe.position.copy(center).addScaledVector(direction, 48);
@@ -64,13 +71,14 @@ function SceneCamera({ layout, reducedMotion }) {
     }
     orbit.minZoom = fit * .65;
     orbit.maxZoom = fit * 4;
-    goal.current = { center, zoom: Math.max(1, fit), active: !reducedMotion };
-  }, [camera, layout, size.width, size.height, reducedMotion]);
+    goal.current = { center: restore?.center ?? center, direction, zoom: restore?.zoom ?? Math.max(1, fit), active: !reducedMotion };
+    if (restore) savedView.current = null;
+  }, [camera, layout, size.width, size.height, reducedMotion, active]);
   useFrame((_, delta) => {
     const target = goal.current, orbit = controls.current;
     if (!target?.active || !orbit) return;
     const step = 1 - Math.exp(-Math.min(delta, .1) * 9);
-    const offset = camera.position.clone().sub(orbit.target);
+    const offset = camera.position.clone().sub(orbit.target).lerp(target.direction.clone().multiplyScalar(48), step);
     orbit.target.lerp(target.center, step);
     camera.position.copy(orbit.target).add(offset);
     camera.zoom = THREE.MathUtils.lerp(camera.zoom, target.zoom, step);
@@ -78,7 +86,7 @@ function SceneCamera({ layout, reducedMotion }) {
       orbit.target.copy(target.center);
       camera.position.copy(target.center).add(offset);
       camera.zoom = target.zoom;
-      target.active = false;
+      if (offset.clone().normalize().distanceTo(target.direction) < .002) target.active = false;
     }
     camera.updateProjectionMatrix();
     orbit.update();
@@ -129,7 +137,7 @@ const Platform = memo(function Platform({ position, rotation = 0, line, reducedM
     <Traveller position={[upper ? 3.3 : -6.7, .01, -.45]} shirt="#b57664" phase={1.1} reducedMotion={reducedMotion} />
     <Traveller position={[upper ? 5.8 : 5.6, .01, -.25]} shirt="#7b998a" phase={2.6} reducedMotion={reducedMotion} />
     <RailTunnel side={-1} /><RailTunnel side={1} endX={trackEndX} startX={upper ? trackEndX - 2.6 : 7.6} />
-    <Train position={[0, -.36, d.trackZ]} visibleEndX={trackEndX - .2} line={line} stripe={color} phaseOffset={phaseOffset} reducedMotion={reducedMotion} />
+    <Train platformRole={upper ? 'source' : 'destination'} position={[0, -.36, d.trackZ]} visibleEndX={trackEndX - .2} line={line} stripe={color} phaseOffset={phaseOffset} reducedMotion={reducedMotion} />
   </group>;
 });
 
@@ -204,17 +212,18 @@ function CutawayEarth({ layout: l }) {
   </group>;
 }
 
-function StationWorld({ values, station, validation, reducedMotion }) {
+function StationWorld({ values, station, validation, simulation, reducedMotion }) {
   const { size } = useThree();
   const targetLayout = useMemo(() => getStationLayout(values), [values]);
   const { layout, transitioning } = useStationLayout(values, reducedMotion);
   const mobile = size.width < 700;
-  return <>
+  return <WorldMotion simulation={simulation} reducedMotion={reducedMotion}>
     <color attach="background" args={['#dce9e3']} />
     <fog attach="fog" args={['#dce9e3', 75, 130]} />
     <ambientLight intensity={.68} />
     <hemisphereLight args={['#fff3df', '#91a49b', 2]} />
     <directionalLight position={[-10, 22, 13]} intensity={2.5} color="#fff3dc" castShadow shadow-mapSize={[2048, 2048]} shadow-camera-left={-32} shadow-camera-right={32} shadow-camera-top={32} shadow-camera-bottom={-32} shadow-camera-near={1} shadow-camera-far={78} shadow-normalBias={.035} shadow-radius={3} />
+    <MonochromeWorld>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layout.groundY - .85, 0]} receiveShadow><planeGeometry args={[200, 200]} /><meshStandardMaterial color="#d8e4d9" roughness={1} /></mesh>
     <ContactShadows key={transitioning ? 'resizing' : layout.groundY} position={[0, layout.groundY - .83, 0]} opacity={.2} scale={58} blur={2.9} far={10} resolution={512} frames={transitioning ? Infinity : 1} color="#51675f" />
     <group>
@@ -227,9 +236,11 @@ function StationWorld({ values, station, validation, reducedMotion }) {
       <PeopleFlow layout={layout} reducedMotion={reducedMotion} />
       <ValidationRoute key={validation?.id ?? 'idle'} layout={layout} validation={validation} reducedMotion={reducedMotion} />
     </group>
-    <SceneCamera layout={targetLayout} reducedMotion={reducedMotion} />
+    </MonochromeWorld>
+    <TransferSimulation layout={layout} station={station} simulation={simulation} reducedMotion={reducedMotion} />
+    <SceneCamera layout={targetLayout} reducedMotion={reducedMotion} simulation={simulation} />
     <EffectComposer multisampling={0}><N8AO halfRes quality={mobile ? 'performance' : 'low'} aoRadius={.66} intensity={1.35} distanceFalloff={.8} /></EffectComposer>
-  </>;
+  </WorldMotion>;
 }
 
 export default memo(StationWorld);

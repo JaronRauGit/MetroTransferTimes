@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Shape } from 'three';
+import { useWorldMotion } from './WorldMotion.jsx';
 import { Block, Rod, Sign, colors } from './Primitives.jsx';
 
 export function Building({ position, width, depth, height, color = colors.cream, roof = colors.terracotta, flat = false }) {
@@ -83,9 +84,10 @@ export function StaircaseAlongX({ topX, bottomX, yTop, yBottom, z, width = 1.52,
 
 function MovingTreads({ x, topY, bottomY, topZ, bottomZ, count, reducedMotion }) {
   const treads = useRef([]);
+  const motion = useWorldMotion();
   useFrame(({ clock }) => {
     if (reducedMotion) return;
-    const flow = clock.getElapsedTime() * .15;
+    const flow = motion.current.time * .15;
     treads.current.forEach((mesh, i) => {
       if (!mesh) return;
       const t = (((i + .5) / count + flow) % 1);
@@ -127,9 +129,10 @@ function WalkwayRamp({ boundary, side }) {
 
 export function MovingWalkway({ position = [.15, .65, -.4], length = 4.7, reducedMotion }) {
   const slats = useRef([]);
+  const motion = useWorldMotion();
   useFrame(({ clock }) => {
     if (reducedMotion) return;
-    const advance = clock.getElapsedTime() * .68;
+    const advance = motion.current.time * .68;
     slats.current.forEach((mesh, i) => {
       if (mesh) mesh.position.x = -length / 2 + ((i / 18 * length + advance) % length);
     });
