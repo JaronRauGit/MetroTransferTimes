@@ -7,9 +7,10 @@ import { simulationTiming } from '../simulation.js';
 import { lineColor } from './lineCatalog.js';
 import Train from './Train.jsx';
 import Person from './Person.jsx';
+import { PassengerClock, ArrivalResult } from './JourneyLabels.jsx';
 import { createPreviewPath } from './previewPath.js';
 
-export default function TransferSimulation({ layout: l, station, simulation, reducedMotion }) {
+export default function TransferSimulation({ layout: l, station, simulation, result, reducedMotion }) {
   const passenger = useRef(), ring = useRef(), footsteps = useRef();
   const scratch = useMemo(() => ({ matrix: new Matrix4(), position: new Vector3(), scale: new Vector3(.085, .012, .17), rotation: new Euler(), quaternion: new Quaternion(), colour: new Color(), grey: new Color('#e4ddce') }), []);
   const movement = useRef({ moving: true, time: 0 });
@@ -41,8 +42,9 @@ export default function TransferSimulation({ layout: l, station, simulation, red
     footsteps.current.instanceColor.needsUpdate = true;
     movement.current = { moving: pose.moving, time: (elapsed - simulationTiming.walkStart) * 2.2 };
   }, -1);
-  if (simulation?.status !== 'running') return null;
+  if (!simulation && !result) return null;
   return <group name="transfer-simulation">
+    {simulation?.status === 'running' && <>
     <group position={[l.upperX, l.upperY, l.upperZ]}>
       <Train actor="source" line={station.fromLine} stripe={lineColor(station.fromLine)} visibleEndX={l.upperTrackEndX - .2} />
     </group>
@@ -50,6 +52,7 @@ export default function TransferSimulation({ layout: l, station, simulation, red
       <Train actor="destination" line={station.toLine} stripe={lineColor(station.toLine)} />
     </group>
     <group ref={passenger} name="featured-passenger" scale={1} visible={false}>
+      <PassengerClock />
       <Person shirt="#ec7652" skin="#bf8863" trousers="#365b69" hair="#45382e" movement={movement} hero reducedMotion={reducedMotion} />
       <mesh position={[0, 1.45, 0]} rotation={[0, 0, Math.PI]}><coneGeometry args={[.105, .2, 8]} /><meshBasicMaterial color="#f58258" /></mesh>
       <pointLight position={[0, 1, 0]} intensity={1.2} distance={2.5} color="#ffcd91" />
@@ -59,5 +62,7 @@ export default function TransferSimulation({ layout: l, station, simulation, red
       <mesh rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[.3, .39, 28]} /><meshBasicMaterial color="#ed8156" transparent opacity={.85} depthWrite={false} /></mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[.29, 24]} /><meshBasicMaterial color="#ffe2ad" transparent opacity={.25} depthWrite={false} /></mesh>
     </group>
+    </>}
+    <ArrivalResult position={path.nodes.at(-2).p} simulation={simulation} result={result} station={station} />
   </group>;
 }

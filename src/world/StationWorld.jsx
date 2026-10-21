@@ -212,7 +212,7 @@ function CutawayEarth({ layout: l }) {
   </group>;
 }
 
-function StationWorld({ values, station, validation, simulation, reducedMotion }) {
+function StationWorld({ values, station, validation, simulation, result, reducedMotion }) {
   const { size } = useThree();
   const targetLayout = useMemo(() => getStationLayout(values), [values]);
   const { layout, transitioning } = useStationLayout(values, reducedMotion);
@@ -237,7 +237,7 @@ function StationWorld({ values, station, validation, simulation, reducedMotion }
       <ValidationRoute key={validation?.id ?? 'idle'} layout={layout} validation={validation} reducedMotion={reducedMotion} />
     </group>
     </MonochromeWorld>
-    <TransferSimulation layout={layout} station={station} simulation={simulation} reducedMotion={reducedMotion} />
+    <TransferSimulation layout={layout} station={station} simulation={simulation} result={result} reducedMotion={reducedMotion} />
     <SceneCamera layout={targetLayout} reducedMotion={reducedMotion} simulation={simulation} />
     <EffectComposer multisampling={0}><N8AO halfRes quality={mobile ? 'performance' : 'low'} aoRadius={.66} intensity={1.35} distanceFalloff={.8} /></EffectComposer>
   </WorldMotion>;

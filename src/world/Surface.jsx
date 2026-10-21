@@ -1,6 +1,7 @@
 import { Block, FloorSlab, Rod, Sign, colors } from './Primitives.jsx';
 import { Building, LowPolyTree, Palm, StaircaseAlongX } from './Architecture.jsx';
-import { Traveller, Turnstiles } from './Details.jsx';
+import StreetMobility from './StreetMobility.jsx';
+import { Turnstiles } from './Details.jsx';
 
 function CasaFacade({ x }) {
   const y = 3.56;
@@ -88,13 +89,13 @@ export default function BarcelonaStreet({ layout, stationName, reducedMotion }) 
   return <group>
     <group position={[0, layout.streetY - 3.56, 0]}>
     <FloorSlab position={[center, 3.56, -4.65]} size={[width, 4.18, .44]} color="#e9d7b5" />
-    <FloorSlab position={[center, 3.56, -2.33]} size={[width, .53, .44]} color="#aeb5a6" sideColor="#9f9e8c" />
+    <FloorSlab position={[center, 3.56, -2.37]} size={[width, .75, .44]} color="#aeb5a6" sideColor="#9f9e8c" />
     <FloorSlab position={[layout.streetMinX + leftWidth / 2, 3.56, -.3325]} size={[leftWidth, 3.465, .44]} color="#eee0c4" />
     <FloorSlab position={[rightStart + rightWidth / 2, 3.56, -.3325]} size={[rightWidth, 3.465, .44]} color="#eee0c4" />
     <FloorSlab position={[x, 3.56, -1.4075]} size={[rightStart - layout.entranceTopX + .18, 1.315, .44]} color="#eee0c4" />
     <FloorSlab position={[x, 3.56, 1.325]} size={[rightStart - layout.entranceTopX + .18, .15, .44]} color="#eee0c4" />
-    <Block position={[center, 3.565, -2.52]} size={[width, .01, .045]} color="#faf1d6" castShadow={false} />
-    {Array.from({ length: 15 }, (_, i) => <Block key={i} position={[layout.streetMinX + (i + .5) * width / 15, 3.565, -2.34]} size={[.07, .01, .24]} color="#f3e7ca" castShadow={false} />)}
+    <Block position={[center, 3.565, -2.73]} size={[width, .01, .045]} color="#faf1d6" castShadow={false} />
+    {Array.from({ length: 15 }, (_, i) => <Block key={i} position={[layout.streetMinX + (i + .5) * width / 15, 3.565, -2.37]} size={[.35, .01, .025]} color="#f3e7ca" castShadow={false} />)}
     <Building position={[layout.upperX - 5.95, 3.58, -5.35]} width={2.9} depth={2.05} height={3.2} color="#e3c8a6" roof="#b7765c" flat />
     <CasaFacade x={layout.upperX - 1.82} />
     <Building position={[layout.upperX + 2.85, 3.58, -5.35]} width={3.1} depth={2.1} height={3.45} color="#e9dcbf" roof="#8ca08a" flat />
@@ -104,9 +105,9 @@ export default function BarcelonaStreet({ layout, stationName, reducedMotion }) 
       color={i % 2 ? '#e6d6b8' : '#e5c8a4'} roof={i % 2 ? '#8ca08a' : '#bc856b'} flat
     />)}
     <Building position={[layout.lowerX + 2.08, 3.58, -5.35]} width={3.3} depth={2.05} height={3.1} color="#e5cfb1" roof="#b7795e" flat />
-    <LowPolyTree position={[layout.upperX + 5.08, 3.58, -3.52]} scale={.7} />
-    <LowPolyTree position={[layout.lowerX - 1.55, 3.58, -3.5]} hue="#7f9878" scale={.7} />
-    <Palm position={[layout.lowerX + 4.45, 3.58, -3.3]} scale={.68} />
+    <LowPolyTree position={[layout.upperX + 5.08, 3.58, -3.95]} scale={.58} />
+    <LowPolyTree position={[layout.lowerX - 1.55, 3.58, -3.95]} hue="#7f9878" scale={.58} />
+    <Palm position={[layout.lowerX + 4.45, 3.58, -3.95]} scale={.58} />
     {Array.from({ length: 11 }, (_, i) => {
       const tileX = layout.streetMinX + 1.5 + i * (width - 3) / 10;
       return Math.abs(tileX - x) < 2.6 ? null : <FlowerTile key={i} x={tileX} z={.65} />;
@@ -114,8 +115,7 @@ export default function BarcelonaStreet({ layout, stationName, reducedMotion }) 
     <BarcelonaBench position={[layout.upperX + 4.72, 3.58, -1.33]} />
     <BarcelonaLamp position={[layout.upperX + 5.95, 3.58, -1.16]} />
     <BarcelonaLamp position={[layout.lowerX + 4.6, 3.58, -1.16]} />
-    <Traveller position={[layout.upperX + 2.8, 3.58, -2.86]} shirt="#c16e59" phase={1.4} walk={.23} reducedMotion={reducedMotion} />
-    <Traveller position={[layout.lowerX + 2.1, 3.58, -1.25]} shirt="#d1a268" phase={3} walk={.17} reducedMotion={reducedMotion} />
+    <StreetMobility layout={layout} reducedMotion={reducedMotion} />
     </group>
     <PavementOpening layout={layout} stationName={stationName} />
   </group>;

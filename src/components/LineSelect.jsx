@@ -7,7 +7,7 @@ export function LineBadge({ line }) {
   return <span className="line-badge" style={{ backgroundColor: lineColor(line), color: darkText ? '#183c37' : '#fff9ed' }}>{line}</span>;
 }
 
-export default function LineSelect({ id, label, value, onChange }) {
+export default function LineSelect({ id, label, value, onChange, inline = false }) {
   const anchor = useRef();
   const popup = useRef();
   const [open, setOpen] = useState(false);
@@ -65,8 +65,9 @@ export default function LineSelect({ id, label, value, onChange }) {
     } else if (event.key === 'Escape' || event.key === 'Tab') setOpen(false);
   }
 
-  return <div className="line-picker">
-    <span className="line-picker-label" id={`${id}-label`}>{label}</span>
+  const Wrapper = inline ? 'span' : 'div';
+  return <Wrapper className={`line-picker${inline ? ' inline-line-picker' : ''}`}>
+    <span className={inline ? 'sr-only' : 'line-picker-label'} id={`${id}-label`}>{label}</span>
     <button ref={anchor} id={id} type="button" className="line-picker-trigger" role="combobox" aria-labelledby={`${id}-label ${id}-value`} aria-haspopup="listbox" aria-expanded={open} aria-controls={menuId} aria-activedescendant={open ? `${id}-${lineOptions[active]}` : undefined} onKeyDown={handleKey} onClick={() => { setActive(lineOptions.indexOf(value)); setOpen(current => !current); }}>
       <span id={`${id}-value`}><LineBadge line={value} /></span>
       <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -76,5 +77,5 @@ export default function LineSelect({ id, label, value, onChange }) {
         <LineBadge line={line} /><span>Line {line.slice(1)}</span><span className="line-option-check" aria-hidden="true">{line === value ? '✓' : ''}</span>
       </div>)}
     </div>, document.body)}
-  </div>;
+  </Wrapper>;
 }
