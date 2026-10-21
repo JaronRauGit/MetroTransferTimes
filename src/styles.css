@@ -305,9 +305,14 @@ body, .world-canvas { background: var(--world-bg); }
 .theme-control button:hover { background: #97b39924; }
 .theme-auto { font-size: 10px; font-weight: 700; }
 .theme-auto[aria-pressed="true"] { color: #3c735c; background: #b0c6a431; }
-.experience.is-launching { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
-.is-launching .calculator-dock { display: none; }
-.is-launching .scene-header, .is-launching .scene-instruction, .is-launching .theme-control { visibility: hidden; }
+/* Keep the final canvas size during launch; only fade the surrounding UI. */
+.calculator-dock, .scene-header, .scene-instruction, .theme-control { transition: opacity .45s ease; }
+.is-opening .calculator-dock, .is-opening .scene-header, .is-opening .scene-instruction, .is-opening .theme-control { visibility: hidden; opacity: 0; }
+.world-canvas::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to bottom, transparent calc(100% - 70px), var(--world-bg)); opacity: 0; transition: opacity .45s ease; }
+.is-opening .world-canvas::after { opacity: 1; }
+@media (max-height: 600px) and (min-width: 560px) and (orientation: landscape) {
+  .world-canvas::after { background: linear-gradient(to right, transparent calc(100% - 70px), var(--world-bg)); }
+}
 .launch-screen { position: fixed; z-index: 200; inset: 0; display: flex; justify-content: center; align-items: flex-end; padding: 20px 16px max(32px, env(safe-area-inset-bottom)); background: linear-gradient(to bottom, transparent 48%, var(--launch-fade) 66%, var(--world-bg) 90%); pointer-events: auto; }
 .launch-copy { text-align: center; animation: launch-copy-in .6s ease both; }
 .launch-kicker { color: #6c8a79; font-size: 9px; font-weight: 750; letter-spacing: .16em; }

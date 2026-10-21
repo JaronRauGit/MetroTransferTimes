@@ -37,7 +37,7 @@ function framingPoints(layout) {
   return points;
 }
 
-function SceneCamera({ layout, reducedMotion, simulation, editingLabels, launching }) {
+function SceneCamera({ layout, reducedMotion, simulation, editingLabels }) {
   const controls = useRef();
   const goal = useRef(null);
   const savedView = useRef(null);
@@ -65,8 +65,8 @@ function SceneCamera({ layout, reducedMotion, simulation, editingLabels, launchi
     const mobile = size.width < 900;
     const header = document.querySelector('.scene-header')?.getBoundingClientRect();
     const world = document.querySelector('.world-canvas')?.getBoundingClientRect();
-    const headerSpace = !launching && header && world ? header.bottom - world.top + 12 : 0;
-    const side = mobile ? 12 : 32, top = launching ? 30 : Math.max(headerSpace, mobile ? editingLabels ? 128 : 88 : 72), bottom = launching ? Math.min(190, size.height * .3) : mobile ? 42 : 30;
+    const headerSpace = header && world ? header.bottom - world.top + 12 : 0;
+    const side = mobile ? 12 : 32, top = Math.max(headerSpace, mobile ? editingLabels ? 128 : 88 : 72), bottom = mobile ? 42 : 30;
     const fit = Math.min(Math.max(40, size.width - side * 2) / (maxX - minX), Math.max(40, size.height - top - bottom) / (maxY - minY));
     center.addScaledVector(right, (minX + maxX) / 2).addScaledVector(up, (minY + maxY) / 2 + (top - bottom) / (2 * fit));
     if (!goal.current || reducedMotion) {
@@ -81,7 +81,7 @@ function SceneCamera({ layout, reducedMotion, simulation, editingLabels, launchi
     orbit.maxZoom = fit * 4;
     goal.current = { center: restoreFraming ? restore.center : center, direction, zoom: restoreFraming ? restore.zoom : Math.max(1, fit), active: !reducedMotion };
     if (restore) savedView.current = null;
-  }, [camera, layout, size.width, size.height, reducedMotion, active, editingLabels, launching]);
+  }, [camera, layout, size.width, size.height, reducedMotion, active, editingLabels]);
   useFrame((_, delta) => {
     const target = goal.current, orbit = controls.current;
     if (!target?.active || !orbit) return;
@@ -220,7 +220,7 @@ function CutawayEarth({ layout: l }) {
   </group>;
 }
 
-function StationWorld({ values, station, validation, simulation, reducedMotion, compact, theme = 'light', launching }) {
+function StationWorld({ values, station, validation, simulation, reducedMotion, compact, theme = 'light' }) {
   const { size } = useThree();
   const targetLayout = useMemo(() => getStationLayout(values, getStationShape(values, station.presetId)), [values, station.presetId]);
   const { layout, transitioning } = useStationLayout(values, reducedMotion, station.presetId);
@@ -249,7 +249,7 @@ function StationWorld({ values, station, validation, simulation, reducedMotion, 
     </group>
     </MonochromeWorld>
     <TransferSimulation layout={layout} station={station} simulation={simulation} reducedMotion={reducedMotion} />
-    <SceneCamera layout={targetLayout} reducedMotion={reducedMotion} simulation={simulation} launching={launching} editingLabels={!station.presetId && simulation?.status !== 'running'} />
+    <SceneCamera layout={targetLayout} reducedMotion={reducedMotion} simulation={simulation} editingLabels={!station.presetId && simulation?.status !== 'running'} />
     <EffectComposer multisampling={0}><N8AO halfRes quality={mobile ? 'performance' : 'low'} aoRadius={.66} intensity={1.35} distanceFalloff={.8} /></EffectComposer>
   </WorldMotion></WorldNightContext.Provider>;
 }

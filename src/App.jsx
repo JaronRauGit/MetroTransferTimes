@@ -46,10 +46,10 @@ export default function App() {
 
   function resetWork() { validation.cancel(); calculation.cancel(); }
 
-  return <><main className={`experience${launching ? ' is-launching' : ''}`} inert={launching ? true : undefined} aria-hidden={launching ? true : undefined}>
+  return <><main className={`experience${launchPhase === 'opening' ? ' is-opening' : ''}`} inert={launching ? true : undefined} aria-hidden={launching ? true : undefined}>
     <div className="world-canvas" aria-label="Three-dimensional Barcelona metro cutaway with street and two crossing underground platforms">
       {!sceneFailed && <SceneBoundary onFailure={() => setSceneFailed(true)}><Canvas shadows="percentage" dpr={[1, compact ? 1.25 : 1.6]} gl={{ antialias: true, powerPreference: 'high-performance' }} orthographic camera={{ position: [23, 18.96, 22.85], zoom: 40, near: .1, far: 130 }} onCreated={({ gl }) => { gl.toneMappingExposure = 1.08; gl.localClippingEnabled = true; }} onError={() => setSceneFailed(true)}>
-        <StationWorld values={values} station={station} validation={validation.run} simulation={calculation.run} compact={compact} reducedMotion={reducedMotion} theme={appearance.theme} launching={launching} />
+        <StationWorld values={values} station={station} validation={validation.run} simulation={calculation.run} compact={compact} reducedMotion={reducedMotion} theme={appearance.theme} />
         <SceneReady onReady={markReady} />
       </Canvas></SceneBoundary>}
       {sceneFailed && <p className="scene-fallback">The 3D station could not start in this browser. The calculator is still available below.</p>}
