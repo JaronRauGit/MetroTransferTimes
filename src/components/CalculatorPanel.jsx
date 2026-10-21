@@ -29,7 +29,7 @@ export default function CalculatorPanel({ mode, values, station, onModeChange, o
   function start(event) {
     event?.preventDefault();
     if (event?.currentTarget.tagName === 'FORM' && !event.currentTarget.reportValidity()) return;
-    try { validation.cancel(); calculation.start(values, station); setFormError(''); }
+    try { validation.cancel(); calculation.start(values, station); document.activeElement?.blur(); setFormError(''); }
     catch { setFormError('Please enter smaller, finite distances and step counts.'); }
   }
   function switchMode(next) { setFormError(''); onModeChange(next); }

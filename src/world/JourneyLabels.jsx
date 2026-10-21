@@ -1,18 +1,26 @@
-import { useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import { Html } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import { useWorldMotion } from './WorldMotion.jsx';
 import { simulationTiming } from '../simulation.js';
 
-const screenPosition = (width, height) => (object, camera, size) => {
+const screenPosition = (width, height, clearance) => (object, camera, size) => {
   const point = object.getWorldPosition(new Vector3()).project(camera);
-  return [Math.max(width / 2 + 9, Math.min(size.width - width / 2 - 9, (point.x + 1) * size.width / 2)), Math.max(height / 2 + 55, Math.min(size.height - height / 2 - 12, (1 - point.y) * size.height / 2))];
+  const maxY = Math.max(height / 2, size.height - height / 2 - 12);
+  const minY = Math.min(maxY, height / 2 + clearance.current);
+  return [Math.max(width / 2 + 9, Math.min(size.width - width / 2 - 9, (point.x + 1) * size.width / 2)), Math.max(minY, Math.min(maxY, (1 - point.y) * size.height / 2))];
 };
-const clockPosition = screenPosition(104, 42);
-
 export function PassengerClock() {
   const bubble = useRef(), clock = useRef(), fraction = useRef();
+  const clearance = useRef(88);
+  const { size } = useThree();
+  const clockPosition = useMemo(() => screenPosition(104, 42, clearance), []);
+  useLayoutEffect(() => {
+    const header = document.querySelector('.scene-header')?.getBoundingClientRect();
+    const world = document.querySelector('.world-canvas')?.getBoundingClientRect();
+    clearance.current = header && world ? header.bottom - world.top + 10 : 88;
+  }, [size.width, size.height]);
   const motion = useWorldMotion();
   useFrame(() => {
     if (!bubble.current) return;

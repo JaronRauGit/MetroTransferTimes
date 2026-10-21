@@ -35,7 +35,7 @@ function framingPoints(layout) {
   return points;
 }
 
-function SceneCamera({ layout, reducedMotion, simulation }) {
+function SceneCamera({ layout, reducedMotion, simulation, editingLabels }) {
   const controls = useRef();
   const goal = useRef(null);
   const savedView = useRef(null);
@@ -44,8 +44,11 @@ function SceneCamera({ layout, reducedMotion, simulation }) {
   useLayoutEffect(() => {
     if (!controls.current) return;
     const orbit = controls.current;
-    if (active && !savedView.current) savedView.current = { center: orbit.target.clone(), zoom: camera.zoom, direction: camera.position.clone().sub(orbit.target).normalize() };
+    const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    if (active && !savedView.current) savedView.current = { center: orbit.target.clone(), zoom: camera.zoom, direction: camera.position.clone().sub(orbit.target).normalize(), viewportWidth, viewportHeight };
     const restore = !active ? savedView.current : null;
+    const restoreFraming = restore && Math.abs(restore.viewportWidth - viewportWidth) < 2 && Math.abs(restore.viewportHeight - viewportHeight) < 2;
     const direction = active ? new THREE.Vector3(1, .66, 1).normalize() : restore?.direction ?? camera.position.clone().sub(orbit.target).normalize();
     const points = active ? layout.walkingVolumes.flatMap(volume => [new THREE.Vector3(...volume.min), new THREE.Vector3(...volume.max)]).concat([new THREE.Vector3(layout.upperX - 8, layout.upperY + 2, -4), new THREE.Vector3(layout.lowerX + 1, layout.lowerY, 9)]) : framingPoints(layout);
     const center = new THREE.Box3().setFromPoints(points).getCenter(new THREE.Vector3());
@@ -57,9 +60,12 @@ function SceneCamera({ layout, reducedMotion, simulation }) {
     const xs = points.map(point => point.clone().sub(center).dot(right));
     const ys = points.map(point => point.clone().sub(center).dot(up));
     const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
-    const mobile = size.width < 700;
-    const side = mobile ? 12 : 32, top = mobile ? 67 : 72, bottom = mobile ? 42 : 30;
-    const fit = Math.min((size.width - side * 2) / (maxX - minX), (size.height - top - bottom) / (maxY - minY));
+    const mobile = size.width < 900;
+    const header = document.querySelector('.scene-header')?.getBoundingClientRect();
+    const world = document.querySelector('.world-canvas')?.getBoundingClientRect();
+    const headerSpace = header && world ? header.bottom - world.top + 12 : 0;
+    const side = mobile ? 12 : 32, top = Math.max(headerSpace, mobile ? editingLabels ? 128 : 88 : 72), bottom = mobile ? 42 : 30;
+    const fit = Math.min(Math.max(40, size.width - side * 2) / (maxX - minX), Math.max(40, size.height - top - bottom) / (maxY - minY));
     center.addScaledVector(right, (minX + maxX) / 2).addScaledVector(up, (minY + maxY) / 2 + (top - bottom) / (2 * fit));
     if (!goal.current || reducedMotion) {
       camera.position.copy(center).addScaledVector(direction, 48);
@@ -71,9 +77,9 @@ function SceneCamera({ layout, reducedMotion, simulation }) {
     }
     orbit.minZoom = fit * .65;
     orbit.maxZoom = fit * 4;
-    goal.current = { center: restore?.center ?? center, direction, zoom: restore?.zoom ?? Math.max(1, fit), active: !reducedMotion };
+    goal.current = { center: restoreFraming ? restore.center : center, direction, zoom: restoreFraming ? restore.zoom : Math.max(1, fit), active: !reducedMotion };
     if (restore) savedView.current = null;
-  }, [camera, layout, size.width, size.height, reducedMotion, active]);
+  }, [camera, layout, size.width, size.height, reducedMotion, active, editingLabels]);
   useFrame((_, delta) => {
     const target = goal.current, orbit = controls.current;
     if (!target?.active || !orbit) return;
@@ -212,20 +218,20 @@ function CutawayEarth({ layout: l }) {
   </group>;
 }
 
-function StationWorld({ values, station, validation, simulation, reducedMotion }) {
+function StationWorld({ values, station, validation, simulation, reducedMotion, compact }) {
   const { size } = useThree();
   const targetLayout = useMemo(() => getStationLayout(values, getStationShape(values, station.presetId)), [values, station.presetId]);
   const { layout, transitioning } = useStationLayout(values, reducedMotion, station.presetId);
-  const mobile = size.width < 700;
+  const mobile = compact || size.width < 700;
   return <WorldMotion simulation={simulation} reducedMotion={reducedMotion}>
     <color attach="background" args={['#dce9e3']} />
     <fog attach="fog" args={['#dce9e3', 75, 130]} />
     <ambientLight intensity={.68} />
     <hemisphereLight args={['#fff3df', '#91a49b', 2]} />
-    <directionalLight position={[-10, 22, 13]} intensity={2.5} color="#fff3dc" castShadow shadow-mapSize={[2048, 2048]} shadow-camera-left={-32} shadow-camera-right={32} shadow-camera-top={32} shadow-camera-bottom={-32} shadow-camera-near={1} shadow-camera-far={78} shadow-normalBias={.035} shadow-radius={3} />
+    <directionalLight position={[-10, 22, 13]} intensity={2.5} color="#fff3dc" castShadow shadow-mapSize={mobile ? [1024, 1024] : [2048, 2048]} shadow-camera-left={-32} shadow-camera-right={32} shadow-camera-top={32} shadow-camera-bottom={-32} shadow-camera-near={1} shadow-camera-far={78} shadow-normalBias={.035} shadow-radius={3} />
     <MonochromeWorld>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layout.groundY - .85, 0]} receiveShadow><planeGeometry args={[200, 200]} /><meshStandardMaterial color="#d8e4d9" roughness={1} /></mesh>
-    <ContactShadows key={transitioning ? 'resizing' : layout.groundY} position={[0, layout.groundY - .83, 0]} opacity={.2} scale={58} blur={2.9} far={10} resolution={512} frames={transitioning ? Infinity : 1} color="#51675f" />
+    <ContactShadows key={transitioning ? 'resizing' : layout.groundY} position={[0, layout.groundY - .83, 0]} opacity={.2} scale={58} blur={2.9} far={10} resolution={mobile ? 256 : 512} frames={transitioning ? Infinity : 1} color="#51675f" />
     <group>
       <CutawayEarth layout={layout} />
       <CreatorsNook layout={layout} />
@@ -238,7 +244,7 @@ function StationWorld({ values, station, validation, simulation, reducedMotion }
     </group>
     </MonochromeWorld>
     <TransferSimulation layout={layout} station={station} simulation={simulation} reducedMotion={reducedMotion} />
-    <SceneCamera layout={targetLayout} reducedMotion={reducedMotion} simulation={simulation} />
+    <SceneCamera layout={targetLayout} reducedMotion={reducedMotion} simulation={simulation} editingLabels={!station.presetId && simulation?.status !== 'running'} />
     <EffectComposer multisampling={0}><N8AO halfRes quality={mobile ? 'performance' : 'low'} aoRadius={.66} intensity={1.35} distanceFalloff={.8} /></EffectComposer>
   </WorldMotion>;
 }
