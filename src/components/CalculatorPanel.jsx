@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { measurementSource } from '../stationPresets.js';
-import LineSelect from './LineSelect.jsx';
+import { getStationPreset, measurementSource, stationPresets } from '../stationPresets.js';
 import MappedPlanner from './MappedPlanner.jsx';
 import SimulationLoading from './SimulationLoading.jsx';
 import ValidationPanel from './ValidationPanel.jsx';
@@ -12,10 +11,17 @@ const fields = [
   { id: 'walkwayLength', label: 'Moving walkway', unit: 'm', glyph: '⇢', hint: 'Separate from walking distance', step: 'any' },
 ];
 
-export default function CalculatorPanel({ mode, values, station, onModeChange, onMappedChange, onValuesChange, onStationChange, validation, calculation }) {
+export default function CalculatorPanel({ mode, values, station, onModeChange, onMappedChange, onValuesChange, validation, calculation }) {
   const [formError, setFormError] = useState('');
   const [info, setInfo] = useState(null);
   const dock = useRef(), result = useRef();
+  const previousMode = useRef(mode);
+  useEffect(() => {
+    if (previousMode.current === mode) return;
+    previousMode.current = mode;
+    dock.current.scrollTop = 0;
+    document.getElementById('calculator-title')?.focus({ preventScroll: true });
+  }, [mode]);
   useEffect(() => {
     if (calculation.running || calculation.result) dock.current.scrollTop = 0;
     if (calculation.result) result.current.focus({ preventScroll: true });
@@ -28,39 +34,30 @@ export default function CalculatorPanel({ mode, values, station, onModeChange, o
   }
   function switchMode(next) { setFormError(''); onModeChange(next); }
   function update(id, value) { onValuesChange(current => ({ ...current, [id]: value })); setFormError(''); }
-  const tabs = [{ id: 'mapped', label: 'Mapped stations', note: 'Measured routes' }, { id: 'custom', label: 'Custom calculator', note: 'Your own measurements' }];
   return <section ref={dock} className={`calculator-dock${calculation.running ? ' is-calculating' : ''}`} aria-label="Metro transfer tools">
     <div className="dock-edge" aria-hidden="true" />
     <div className="dock-content" inert={calculation.running ? true : undefined} aria-hidden={calculation.running ? true : undefined}>
-      <div className="planner-tabs" role="tablist" aria-label="Choose transfer tool">
-        {tabs.map((tab, i) => <button key={tab.id} type="button" role="tab" id={`tab-${tab.id}`} aria-selected={mode === tab.id} aria-controls={`panel-${tab.id}`} tabIndex={mode === tab.id ? 0 : -1} onClick={() => switchMode(tab.id)} onKeyDown={event => {
-          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-          event.preventDefault(); const next = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs[1] : tabs[1 - i]; switchMode(next.id); document.getElementById(`tab-${next.id}`)?.focus();
-        }}><strong>{tab.label}</strong><small>{tab.note}</small></button>)}
-      </div>
       {calculation.result && <div className="final-result-banner" ref={result} tabIndex={-1} role="status" aria-live="polite">
-        <div className="result-check" aria-hidden="true">✓</div><div><span className="section-eyebrow">YOUR TRANSFER TAKES</span><strong id="result-time">{calculation.result.label}</strong><small><span id="result-seconds">{calculation.result.seconds.toFixed(2)} seconds</span> · {station.name.trim() || 'Your station'}</small></div><button type="button" className="replay-button" onClick={() => start()}>Replay journey <span aria-hidden="true">↻</span></button>
+        <div className="result-check" aria-hidden="true">◷</div><div><span className="section-eyebrow">ESTIMATED TRANSFER TIME</span><strong id="result-time">{calculation.result.label}</strong></div><button type="button" className="replay-button" onClick={() => start()}>Replay <span aria-hidden="true">↻</span></button>
       </div>}
-      <div role="tabpanel" id={`panel-${mode}`} aria-labelledby={`tab-${mode}`} className="planner-panel">
-        {mode === 'mapped' ? <div className="mapped-workspace">
-          <MappedPlanner station={station} values={values} onChange={next => { onMappedChange(next); setFormError(''); }} />
-          <div className="mapped-action"><button className="calculate-button" type="button" onClick={() => start()}>See my transfer <span aria-hidden="true">↗</span></button><p>Original measurements.<br />Pick any two platforms—even on the same line.</p></div>
+      <div className="planner-panel">
+        {mode === 'choose' ? <div className="station-chooser">
+          <div className="calculator-heading"><h1 id="calculator-title" tabIndex={-1}>Choose a mapped station</h1><p className="custom-route-note">Original measurements. Two lines. Your choice of platforms.</p></div>
+          <div className="station-choices">{stationPresets.map(item => <button key={item.id} type="button" onClick={() => { onMappedChange(getStationPreset(item.id)); setFormError(''); }}><span className="station-choice-symbol" aria-hidden="true">M</span><strong>{item.name}</strong><span aria-hidden="true">→</span></button>)}</div>
+          <button className="quiet-link" type="button" onClick={() => switchMode('custom')}>← Back to the calculator</button>
         </div> : <div className="calculator-workspace">
-          <div className="calculator-main">
-            <div className="calculator-heading"><span className="section-eyebrow">YOUR MEASUREMENTS. YOUR MINIATURE.</span>
-              <h1 id="calculator-title">Calculate the transfer from <LineSelect inline id="fromLine" label="From line" value={station.fromLine} onChange={value => onStationChange(current => ({ ...current, fromLine: value }))} /> to <LineSelect inline id="toLine" label="To line" value={station.toLine} onChange={value => onStationChange(current => ({ ...current, toLine: value }))} /> at <input className="inline-station-input" id="stationName" aria-label="Station name" maxLength="32" size={Math.max(8, station.name.length)} value={station.name} placeholder="Your station" onChange={event => onStationChange(current => ({ ...current, name: event.target.value }))} />.</h1>
-              <p className="custom-route-note">Click the name or lines to label your scene. Your measurements determine the time.</p>
+          <form onSubmit={start} id="transfer-form" className="calculator-main">
+            <div className="calculator-heading"><h1 id="calculator-title" tabIndex={-1}>{mode === 'mapped' ? station.name : 'Calculate transfer time'}</h1>
+              {mode === 'custom' && <p className="custom-route-note">Enter your measurements to estimate the time. Scene labels are just for your miniature.</p>}
             </div>
-            <form onSubmit={start} id="transfer-form">
-              <div className="fields">{fields.map(field => <label className="field" htmlFor={field.id} key={field.id}>
-                <span className="field-name"><span className="field-glyph" aria-hidden="true">{field.glyph}</span>{field.label}</span>
-                <span className="field-control"><input id={field.id} name={field.id} type="number" min="0" step={field.step} inputMode={field.step === '1' ? 'numeric' : 'decimal'} aria-describedby={`${field.id}-hint`} placeholder="0" value={values[field.id]} onChange={event => update(field.id, event.target.value)} /><span>{field.unit}</span></span>
-                <small className="field-hint" id={`${field.id}-hint`}>{field.hint}</small>
-              </label>)}</div>
-              <div className="calculation-actions"><button className="calculate-button" type="submit">Calculate transfer time <span aria-hidden="true">↗</span></button><p className="calculation-prompt">Watch the journey. Get your estimate.</p></div>
-            </form>
-          </div>
-          <aside className="mapped-shortcut"><span className="section-eyebrow">ALREADY MAPPED</span><h2>Sants Estació & Diagonal</h2><p>Choose a station and connect its platforms. No measuring needed.</p><button type="button" onClick={() => switchMode('mapped')}>Explore mapped stations <span aria-hidden="true">→</span></button></aside>
+            {mode === 'mapped' ? <MappedPlanner station={station} values={values} onChange={next => { onMappedChange(next); setFormError(''); }} /> : <div className="fields">{fields.map(field => <label className="field" htmlFor={field.id} key={field.id}>
+              <span className="field-name"><span className="field-glyph" aria-hidden="true">{field.glyph}</span>{field.label}</span>
+              <span className="field-control"><input id={field.id} name={field.id} type="number" min="0" step={field.step} inputMode={field.step === '1' ? 'numeric' : 'decimal'} aria-describedby={`${field.id}-hint`} placeholder="0" value={values[field.id]} onChange={event => update(field.id, event.target.value)} /><span>{field.unit}</span></span>
+              <small className="field-hint" id={`${field.id}-hint`}>{field.hint}</small>
+            </label>)}</div>}
+            <div className="calculation-actions"><button className="calculate-button" type="submit">Calculate transfer time <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 11 11 3M3 3h8v8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></button></div>
+          </form>
+          <aside className="mapped-shortcut">{mode === 'custom' ? <><span className="section-eyebrow">ALREADY MAPPED</span><h2>Sants Estació & Diagonal</h2><p>Explore the measured transfers.</p><button type="button" onClick={() => switchMode('choose')}>Explore mapped stations <span aria-hidden="true">→</span></button></> : <><span className="section-eyebrow">EXPLORE</span><h2>Your own measurements?</h2><button type="button" onClick={() => switchMode('custom')}>Back to the calculator <span aria-hidden="true">→</span></button>{stationPresets.filter(item => item.id !== station.presetId).map(item => <button className="station-switch-link" key={item.id} type="button" onClick={() => onMappedChange(getStationPreset(item.id, station.fromPlatform, station.toPlatform))}>Switch to {item.name} <span aria-hidden="true">→</span></button>)}</>}</aside>
         </div>}
         {formError && <p className="form-error" role="alert">{formError}</p>}
       </div>

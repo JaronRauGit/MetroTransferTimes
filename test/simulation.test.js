@@ -11,13 +11,17 @@ const snapshot = seconds => simulationSnapshot(run, 1000 + seconds * 1000);
 
 test('the preview counts the full estimate during a five-second walk, then restores the world', () => {
   assert.equal(snapshot(0).seconds, 0);
+  assert.ok(Math.abs(simulationTiming.walkStart - simulationTiming.introStart - .5) < 1e-8);
+  assert.equal(simulationTrainState('source', simulationTiming.introStart).door, 1);
+  assert.equal(snapshot(simulationTiming.introStart + .25).seconds, 0);
+  assert.equal(simulationTiming.walkEnd - simulationTiming.walkStart, 5);
   assert.equal(snapshot(simulationTiming.walkStart).seconds, 0);
   assert.ok(Math.abs(snapshot((simulationTiming.walkStart + simulationTiming.walkEnd) / 2).seconds - 102.56) < 1e-8);
   assert.equal(snapshot(simulationTiming.walkEnd).seconds, 205.12);
   assert.equal(snapshot(3).desaturation, 1);
-  assert.ok(snapshot(8.8).desaturation < 1 && snapshot(8.8).desaturation > 0);
-  assert.equal(snapshot(9.2).active, false);
-  assert.equal(snapshot(9.2).desaturation, 0);
+  assert.ok(snapshot(9.3).desaturation < 1 && snapshot(9.3).desaturation > 0);
+  assert.equal(snapshot(simulationTiming.duration).active, false);
+  assert.equal(snapshot(simulationTiming.duration).desaturation, 0);
   assert.equal(snapshot(100).seconds, 205.12);
   assert.equal(simulationSnapshot({ ...run, status: 'complete' }, 2000).active, false);
 });
@@ -25,18 +29,18 @@ test('the preview counts the full estimate during a five-second walk, then resto
 test('featured trains stop to open their doors and conceal their departure inside the portals', () => {
   for (const role of ['source', 'destination']) {
     let previous = -21;
-    for (let t = 0; t < 9.2; t += .005) {
+    for (let t = 0; t < simulationTiming.duration; t += .005) {
       const train = simulationTrainState(role, t, 34);
       assert.ok(train.x >= previous && train.x - previous < .3);
       if (Math.abs(train.x) > .001) assert.equal(train.door, 0);
       previous = train.x;
     }
-    assert.ok(simulationTrainState(role, 9, 34).x - 6.6 > 26.28);
+    assert.ok(simulationTrainState(role, simulationTiming.duration, 34).x - 6.6 > 26.28);
   }
   assert.equal(simulationTrainState('source', simulationTiming.walkStart).door, 1);
   assert.equal(simulationTrainState('destination', simulationTiming.walkEnd).door, 1);
   assert.equal(ambientTrainOpacity('source', snapshot(2)), 0);
-  assert.equal(ambientTrainOpacity('destination', snapshot(6.8)), 0);
+  assert.equal(ambientTrainOpacity('destination', snapshot(7.3)), 0);
   assert.equal(ambientTrainOpacity('source', snapshot(5)), .5);
 });
 

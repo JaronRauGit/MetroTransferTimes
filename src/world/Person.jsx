@@ -7,7 +7,7 @@ import { useWorldMotion } from './WorldMotion.jsx';
 export default function Person({ shirt = '#c47a62', skin = '#c99572', trousers = '#405b66', hair = '#49382e', variant = 0, movement, hero = false, reducedMotion }) {
   const torso = useRef(), head = useRef(), limbs = useRef([]);
   const motion = useWorldMotion();
-  useFrame(() => {
+  useFrame((_, delta) => {
     const state = movement?.current ?? { time: motion.current.time, moving: false };
     const t = (reducedMotion ? 0 : state.time) + variant * 1.7;
     const walking = state.moving && !reducedMotion;
@@ -20,7 +20,10 @@ export default function Person({ shirt = '#c47a62', skin = '#c99572', trousers =
     limbs.current.forEach((limb, i) => {
       if (!limb) return;
       const sign = i % 2 ? -1 : 1;
-      limb.rotation.x = walking ? stride * sign * (i < 2 ? .45 : -.36) : i === 3 && variant % 3 === 1 ? -.6 + Math.sin(t) * .07 : .04;
+      const excited = hero && state.celebrating && !reducedMotion && i >= 2;
+      const targetRaise = excited ? (i === 2 ? -2.55 : 2.55) : 0;
+      limb.rotation.z += (targetRaise - limb.rotation.z) * (1 - Math.exp(-Math.min(delta, .1) * 18));
+      limb.rotation.x = excited ? -.15 : walking ? stride * sign * (i < 2 ? .45 : -.36) : i === 3 && variant % 3 === 1 ? -.6 + Math.sin(t) * .07 : .04;
     });
   });
   return <group ref={torso}>

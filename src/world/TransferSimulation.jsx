@@ -7,10 +7,10 @@ import { simulationTiming } from '../simulation.js';
 import { lineColor } from './lineCatalog.js';
 import Train from './Train.jsx';
 import Person from './Person.jsx';
-import { PassengerClock, ArrivalResult } from './JourneyLabels.jsx';
+import { PassengerClock } from './JourneyLabels.jsx';
 import { createPreviewPath } from './previewPath.js';
 
-export default function TransferSimulation({ layout: l, station, simulation, result, reducedMotion }) {
+export default function TransferSimulation({ layout: l, station, simulation, reducedMotion }) {
   const passenger = useRef(), ring = useRef(), footsteps = useRef();
   const scratch = useMemo(() => ({ matrix: new Matrix4(), position: new Vector3(), scale: new Vector3(.085, .012, .17), rotation: new Euler(), quaternion: new Quaternion(), colour: new Color(), grey: new Color('#e4ddce') }), []);
   const movement = useRef({ moving: true, time: 0 });
@@ -19,7 +19,7 @@ export default function TransferSimulation({ layout: l, station, simulation, res
   useFrame((_, delta) => {
     if (!passenger.current) return;
     const { elapsed, active, journey } = world.current.snapshot;
-    const visible = active && elapsed >= simulationTiming.walkStart && elapsed <= simulationTiming.walkEnd;
+    const visible = active && elapsed >= simulationTiming.introStart && elapsed <= simulationTiming.walkEnd;
     const pose = samplePath(path, journey * path.duration);
     passenger.current.visible = visible;
     passenger.current.position.set(...pose.p);
@@ -28,7 +28,7 @@ export default function TransferSimulation({ layout: l, station, simulation, res
     passenger.current.rotation.y += angleDifference * (1 - Math.exp(-Math.min(delta, .1) * 18));
     ring.current.visible = visible;
     ring.current.position.set(pose.p[0], pose.p[1] + .035, pose.p[2]);
-    footsteps.current.visible = visible;
+    footsteps.current.visible = visible && elapsed >= simulationTiming.walkStart;
     for (let i = 0; i < 20; i++) {
       const sample = samplePath(path, Math.max(0, journey - i * .008) * path.duration);
       const angle = Math.atan2(sample.dx, sample.dz);
@@ -40,11 +40,10 @@ export default function TransferSimulation({ layout: l, station, simulation, res
     }
     footsteps.current.instanceMatrix.needsUpdate = true;
     footsteps.current.instanceColor.needsUpdate = true;
-    movement.current = { moving: pose.moving, time: (elapsed - simulationTiming.walkStart) * 2.2 };
+    movement.current = { moving: pose.moving && elapsed >= simulationTiming.walkStart, time: Math.max(0, elapsed - simulationTiming.walkStart) * 2.2, celebrating: pose.mode === 'walkway' };
   }, -1);
-  if (!simulation && !result) return null;
+  if (simulation?.status !== 'running') return null;
   return <group name="transfer-simulation">
-    {simulation?.status === 'running' && <>
     <group position={[l.upperX, l.upperY, l.upperZ]}>
       <Train actor="source" line={station.fromLine} stripe={lineColor(station.fromLine)} visibleEndX={l.upperTrackEndX - .2} />
     </group>
@@ -62,7 +61,5 @@ export default function TransferSimulation({ layout: l, station, simulation, res
       <mesh rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[.3, .39, 28]} /><meshBasicMaterial color="#ed8156" transparent opacity={.85} depthWrite={false} /></mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[.29, 24]} /><meshBasicMaterial color="#ffe2ad" transparent opacity={.25} depthWrite={false} /></mesh>
     </group>
-    </>}
-    <ArrivalResult position={path.nodes.at(-2).p} simulation={simulation} result={result} station={station} />
   </group>;
 }

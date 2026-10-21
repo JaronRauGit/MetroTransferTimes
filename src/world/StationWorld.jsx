@@ -46,7 +46,7 @@ function SceneCamera({ layout, reducedMotion, simulation }) {
     const orbit = controls.current;
     if (active && !savedView.current) savedView.current = { center: orbit.target.clone(), zoom: camera.zoom, direction: camera.position.clone().sub(orbit.target).normalize() };
     const restore = !active ? savedView.current : null;
-    const direction = active ? new THREE.Vector3(1, .82, 1).normalize() : restore?.direction ?? camera.position.clone().sub(orbit.target).normalize();
+    const direction = active ? new THREE.Vector3(1, .66, 1).normalize() : restore?.direction ?? camera.position.clone().sub(orbit.target).normalize();
     const points = active ? layout.walkingVolumes.flatMap(volume => [new THREE.Vector3(...volume.min), new THREE.Vector3(...volume.max)]).concat([new THREE.Vector3(layout.upperX - 8, layout.upperY + 2, -4), new THREE.Vector3(layout.lowerX + 1, layout.lowerY, 9)]) : framingPoints(layout);
     const center = new THREE.Box3().setFromPoints(points).getCenter(new THREE.Vector3());
     const probe = camera.clone();
@@ -212,7 +212,7 @@ function CutawayEarth({ layout: l }) {
   </group>;
 }
 
-function StationWorld({ values, station, validation, simulation, result, reducedMotion }) {
+function StationWorld({ values, station, validation, simulation, reducedMotion }) {
   const { size } = useThree();
   const targetLayout = useMemo(() => getStationLayout(values), [values]);
   const { layout, transitioning } = useStationLayout(values, reducedMotion);
@@ -237,7 +237,7 @@ function StationWorld({ values, station, validation, simulation, result, reduced
       <ValidationRoute key={validation?.id ?? 'idle'} layout={layout} validation={validation} reducedMotion={reducedMotion} />
     </group>
     </MonochromeWorld>
-    <TransferSimulation layout={layout} station={station} simulation={simulation} result={result} reducedMotion={reducedMotion} />
+    <TransferSimulation layout={layout} station={station} simulation={simulation} reducedMotion={reducedMotion} />
     <SceneCamera layout={targetLayout} reducedMotion={reducedMotion} simulation={simulation} />
     <EffectComposer multisampling={0}><N8AO halfRes quality={mobile ? 'performance' : 'low'} aoRadius={.66} intensity={1.35} distanceFalloff={.8} /></EffectComposer>
   </WorldMotion>;

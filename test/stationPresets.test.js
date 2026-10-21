@@ -23,7 +23,7 @@ function originalRoute(station, from, to) {
 test('only the original Sants and Diagonal presets remain, and the default uses their measurements', () => {
   assert.deepEqual(stationPresets.map(item => item.id).sort(), ['diagonal', 'sants']);
   assert.deepEqual(defaultJourney, defaultStationPreset.values);
-  assert.equal(defaultStationPreset.station.name, 'Sants Estació');
+  assert.equal(defaultStationPreset.station.name, 'Diagonal');
   assert.throws(() => getStationPreset('verdaguer'), RangeError);
   assert.throws(() => getStationPreset('sants', 'unknown'), RangeError);
 });

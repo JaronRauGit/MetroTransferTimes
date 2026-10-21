@@ -77,4 +77,4 @@ export function getStationPreset(id, fromPlatform = 'l3_trinitat', toPlatform = 
   };
 }
 
-export const defaultStationPreset = getStationPreset('sants');
+export const defaultStationPreset = getStationPreset('diagonal');

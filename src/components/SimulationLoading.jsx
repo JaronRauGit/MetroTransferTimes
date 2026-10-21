@@ -21,12 +21,8 @@ export default function SimulationLoading({ calculation }) {
   const state = simulationSnapshot(calculation.run, now);
   const message = messages[Math.min(messages.length - 1, Math.floor(state.progress * messages.length))];
   return <div className="simulation-loading" ref={panel} tabIndex={-1} aria-label="Simulation in progress">
-    <div className="loading-route" aria-hidden="true"><i /><span /><i /><span /><i /></div>
-    <span className="section-eyebrow">THE MINIATURE IS ON IT</span>
     <h2>Simulating your connection</h2>
-    <p className="loading-follow">Follow your passenger above <span aria-hidden="true">↑</span></p>
     <p className="loading-message" key={message} role="status" aria-live="off">{message}</p>
     <div className="loading-progress" role="progressbar" aria-label="Simulation progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(state.progress * 100)}><span style={{ width: `${state.progress * 100}%` }} /></div>
-    <div className="loading-actions"><button type="button" onClick={calculation.finish}>Show result now</button><button type="button" onClick={calculation.cancel}>Cancel</button></div>
   </div>;
 }
