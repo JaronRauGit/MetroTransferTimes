@@ -217,7 +217,7 @@ function CreatorsTerrace() {
       <Block size={[.22, .58, .18]} color={colors.tealDark} />
       <Block position={[0, 0, .11]} size={[.15, .38, .09]} color="#f3d9a4" emissive="#ffcc8e" emissiveIntensity={night ? 1.8 : 0} />
     </group>)}
-    <rectAreaLight name="creators-softbox" position={[0, 4.6, 3.4]} rotation={[-.55, 0, 0]} width={7} height={3} color="#ffdeb2" intensity={night ? 2.2 : .65} />
+    <pointLight name="creators-light" position={[0, 3.8, 2.8]} color="#ffdeb2" intensity={night ? 8 : 1.5} distance={10} decay={2} />
   </group>;
 }
 

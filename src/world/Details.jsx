@@ -13,7 +13,7 @@ export function Traveller({ position, shirt = colors.coral, skin = '#c99572', tr
     group.current.position.y = position[1] + Math.abs(Math.sin(time)) * .045;
     group.current.position.x = position[0] + Math.sin(time * .42) * walk;
   });
-  return <group ref={group} position={position} scale={scale} userData={{ collisionRole: 'person' }}>
+  return <group ref={group} position={position} scale={scale} userData={{ collisionRole: 'person', dynamic: true }}>
     <Person shirt={shirt} skin={skin} trousers={trousers} variant={Math.round(phase * 2)} reducedMotion={reducedMotion} />
   </group>;
 }

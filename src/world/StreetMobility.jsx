@@ -32,7 +32,7 @@ function StreetTrip({ path, offset = 0, rest = 3, reducedMotion, bicycle = false
     root.current.userData.moving = sample.moving && sample.visible;
     root.current.userData.lightOpacity = opacity;
   }, -.9);
-  return <group ref={root} name={bicycle ? 'street-cyclist' : car ? 'street-car' : 'street-pedestrian'}>{children}</group>;
+  return <group ref={root} userData={{ dynamic: true }} name={bicycle ? 'street-cyclist' : car ? 'street-car' : 'street-pedestrian'}>{children}</group>;
 }
 
 function StreetWalker({ layout, variant, reverse, lane, offset, reducedMotion }) {

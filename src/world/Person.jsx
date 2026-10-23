@@ -26,7 +26,7 @@ export default function Person({ shirt = '#c47a62', skin = '#c99572', trousers =
       limb.rotation.x = excited ? -.15 : walking ? stride * sign * (i < 2 ? .45 : -.36) : i === 3 && variant % 3 === 1 ? -.6 + Math.sin(t) * .07 : .04;
     });
   });
-  return <group ref={torso} name={hero ? 'featured-person' : undefined} userData={hero ? { presentation } : undefined}>
+  return <group ref={torso} name={hero ? 'featured-person' : undefined} userData={{ dynamic: true, ...(hero ? { presentation } : {}) }}>
     <group ref={head} position={[0, .85, 0]}>
       <mesh castShadow><sphereGeometry args={[.15, 9, 7]} /><meshStandardMaterial color={skin} roughness={1} flatShading /></mesh>
       <mesh position={[0, .085, -.025]} scale={[1.02, .55, 1.02]} castShadow><sphereGeometry args={[.154, 8, 6]} /><meshStandardMaterial color={hair} roughness={1} flatShading /></mesh>

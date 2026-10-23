@@ -1,8 +1,6 @@
 import { memo, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { ContactShadows, OrbitControls } from '@react-three/drei';
-import { Bloom, EffectComposer, FXAA, N8AO, ToneMapping } from '@react-three/postprocessing';
-import { ToneMappingMode } from 'postprocessing';
 import * as THREE from 'three';
 import { Block, FloorSlab, Sign, colors } from './Primitives.jsx';
 import { Staircase, Escalator, MovingWalkway, Bench } from './Architecture.jsx';
@@ -18,8 +16,9 @@ import MonochromeWorld from './MonochromeWorld.jsx';
 import { worldPalettes } from '../appearance.js';
 import { WorldCompactContext, WorldNightContext, useWorldNight } from './WorldAppearance.jsx';
 import WorldLighting from './WorldLighting.jsx';
-import { lightingProfiles, lightingQuality, surfaceResponse } from './lighting.js';
+import { lightingQuality, surfaceResponse } from './lighting.js';
 import TransferSimulation from './TransferSimulation.jsx';
+import StaticBatch from './StaticBatch.jsx';
 import { creatorsNookBounds } from './creatorsLayout.js';
 import { getStationLayout, getStationShape, stationDimensions as d } from './stationLayout.js';
 import { lineColor, stationLabel } from './lineCatalog.js';
@@ -224,22 +223,23 @@ function CutawayEarth({ layout: l }) {
   </group>;
 }
 
-function StationWorld({ values, station, validation, simulation, reducedMotion, compact, theme = 'light' }) {
+function StationWorld({ values, station, validation, simulation, reducedMotion, compact, theme = 'light', ready, passengerClock }) {
   const { size } = useThree();
   const targetLayout = useMemo(() => getStationLayout(values, getStationShape(values, station.presetId)), [values, station.presetId]);
   const { layout, transitioning } = useStationLayout(values, reducedMotion, station.presetId);
   const mobile = compact || size.width < 700;
   const night = theme === 'dark';
   const palette = worldPalettes[theme];
-  const profile = lightingProfiles[theme], quality = lightingQuality(mobile);
-  return <WorldNightContext.Provider value={night}><WorldCompactContext.Provider value={mobile}><WorldMotion simulation={simulation} reducedMotion={reducedMotion}>
+  const quality = lightingQuality(mobile);
+  const batchRevision = useMemo(() => ({ layout, theme, station }), [layout, theme, station]);
+  return <WorldNightContext.Provider value={night}><WorldCompactContext.Provider value={mobile}><WorldMotion simulation={simulation} reducedMotion={reducedMotion} ready={ready}>
     <color attach="background" args={[palette.background]} />
     <fog attach="fog" args={[palette.background, 75, 130]} />
     <WorldLighting layout={layout} theme={theme} compact={mobile} />
-    <MonochromeWorld theme={theme}>
+    <MonochromeWorld theme={theme} layout={layout}>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layout.groundY - .85, 0]} receiveShadow><planeGeometry args={[200, 200]} /><meshStandardMaterial color={palette.ground} roughness={1} /></mesh>
-    <ContactShadows key={transitioning ? 'resizing' : `${layout.groundY}-${theme}`} position={[0, layout.groundY - .83, 0]} opacity={night ? .26 : .28} scale={64} blur={2.4} far={10} resolution={quality.contactResolution} frames={transitioning ? Infinity : 1} color={night ? '#111c2d' : '#586b78'} />
-    <group>
+    <ContactShadows key={transitioning ? 'resizing' : layout.groundY} position={[0, layout.groundY - .83, 0]} opacity={night ? .22 : .28} scale={64} blur={2.4} far={10} resolution={quality.contactResolution} frames={transitioning ? Infinity : 1} color="#455d63" />
+    <StaticBatch revision={batchRevision} enabled={!transitioning}>
       <CutawayEarth layout={layout} />
       <CreatorsNook layout={layout} />
       <BarcelonaStreet layout={layout} stationName={stationLabel(station.name)} reducedMotion={reducedMotion} />
@@ -248,16 +248,10 @@ function StationWorld({ values, station, validation, simulation, reducedMotion, 
       <Platform position={[layout.lowerX, layout.lowerY, layout.lowerZ]} rotation={Math.PI / 2} line={station.toLine} reducedMotion={reducedMotion} phaseOffset={0} />
       <PeopleFlow layout={layout} reducedMotion={reducedMotion} />
       <ValidationRoute key={validation?.id ?? 'idle'} layout={layout} validation={validation} reducedMotion={reducedMotion} />
-    </group>
+    </StaticBatch>
     </MonochromeWorld>
-    <TransferSimulation layout={layout} station={station} simulation={simulation} reducedMotion={reducedMotion} />
+    <TransferSimulation layout={layout} station={station} simulation={simulation} reducedMotion={reducedMotion} passengerClock={passengerClock} />
     <SceneCamera layout={targetLayout} reducedMotion={reducedMotion} simulation={simulation} editingLabels={!station.presetId && simulation?.status !== 'running'} />
-    <EffectComposer multisampling={0}>
-      <N8AO halfRes={quality.aoHalfResolution} quality={quality.aoQuality} aoRadius={quality.aoRadius} intensity={quality.aoIntensity} distanceFalloff={.8} />
-      <Bloom mipmapBlur intensity={profile.bloom} luminanceThreshold={1.15} luminanceSmoothing={.35} resolutionScale={.5} height={quality.bloomResolution} />
-      <ToneMapping mode={ToneMappingMode.NEUTRAL} />
-      <FXAA />
-    </EffectComposer>
   </WorldMotion></WorldCompactContext.Provider></WorldNightContext.Provider>;
 }
 

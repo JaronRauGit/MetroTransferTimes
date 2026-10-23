@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { calculateTransfer } from './calculator.js';
-import { simulationTiming } from './simulation.js';
+import { createPlayback, simulationTiming } from './simulation.js';
 
 export default function useCalculation(reducedMotion) {
   const [run, setRun] = useState(null);
@@ -17,7 +17,7 @@ export default function useCalculation(reducedMotion) {
   useEffect(() => {
     if (run?.status !== 'running') return;
     if (reducedMotion) { finish(); return; }
-    const tick = () => { if (Date.now() >= run.startedAt + simulationTiming.duration * 1000) finish(); };
+    const tick = () => { if (run.playback.elapsed >= simulationTiming.duration) finish(); };
     const timer = window.setInterval(tick, 100);
     document.addEventListener('visibilitychange', tick);
     tick();
@@ -27,7 +27,7 @@ export default function useCalculation(reducedMotion) {
     const next = calculateTransfer(values);
     if (reducedMotion || next.seconds === 0) { current.current = null; setRun(null); setResult(next); return; }
     setResult(null);
-    const nextRun = { id: ++sequence.current, startedAt: Date.now(), status: 'running', character: Math.random() < .5 ? 'man' : 'woman', values: { ...values }, station: { ...station }, result: next };
+    const nextRun = { id: ++sequence.current, startedAt: Date.now(), playback: createPlayback(), status: 'running', character: Math.random() < .5 ? 'man' : 'woman', values: { ...values }, station: { ...station }, result: next };
     current.current = nextRun;
     setRun(nextRun);
   }

@@ -2,9 +2,20 @@ export const simulationTiming = Object.freeze({ duration: 9.7, introStart: 1.85,
 export const clamp = value => Math.max(0, Math.min(1, value));
 export const smooth = value => { const t = clamp(value); return t * t * (3 - 2 * t); };
 
+// Decorative playback uses presented frames, unlike the real-time validator.
+// Two warm-up frames let mounting/resizing finish before the train arrives.
+export function createPlayback() { return { elapsed: 0, frames: 0 }; }
+export function advancePlayback(playback, delta, ready = true, visible = true) {
+  if (!ready || !visible) return playback.elapsed;
+  if (playback.frames++ < 2) return playback.elapsed;
+  const step = Number.isFinite(delta) ? Math.max(0, Math.min(delta, .05)) : 0;
+  playback.elapsed = Math.min(simulationTiming.duration, playback.elapsed + step);
+  return playback.elapsed;
+}
+
 export function simulationSnapshot(run, now = Date.now()) {
   if (!run) return { elapsed: 0, progress: 0, journey: 0, seconds: 0, desaturation: 0, active: false, stage: 'Ready' };
-  const elapsed = Math.max(0, (now - run.startedAt) / 1000);
+  const elapsed = run.playback?.elapsed ?? Math.max(0, (now - run.startedAt) / 1000);
   const active = run.status === 'running' && elapsed < simulationTiming.duration;
   const journey = clamp((elapsed - simulationTiming.walkStart) / (simulationTiming.walkEnd - simulationTiming.walkStart));
   const desaturation = active ? smooth(elapsed / .45) * (1 - smooth((elapsed - simulationTiming.restoreStart) / .65)) : 0;

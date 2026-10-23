@@ -3,7 +3,7 @@ import { Building, LowPolyTree, Palm, StaircaseAlongX } from './Architecture.jsx
 import StreetMobility from './StreetMobility.jsx';
 import { Turnstiles } from './Details.jsx';
 import { useWorldNight } from './WorldAppearance.jsx';
-import LocalLight, { LightHaze } from './LocalLight.jsx';
+import LocalLight from './LocalLight.jsx';
 import { surfaceResponse } from './lighting.js';
 
 function CasaFacade({ x }) {
@@ -60,7 +60,6 @@ function BarcelonaLamp({ position, shadow = false }) {
     {[-1, 1].map(side => <group key={side}>
       <Rod from={[0, 2.82, 0]} to={[side * .42, 3.12, 0]} radius={.035} color="#405f60" />
       <mesh position={[side * .47, 3.14, 0]}><sphereGeometry args={[.17, 10, 8]} /><meshStandardMaterial color="#fff0c8" emissive="#ffce8a" emissiveIntensity={night ? 2.4 : .05} roughness={.75} /></mesh>
-      <LightHaze position={[side * .47, 3.14, 0]} radius={.34} />
     </group>)}
     <LocalLight name="barcelona-street-lamp" position={[0, 3.13, 0]} target={[0, -3.13, -.65]} power={32} reach={4.7} angle={.76} shadow={shadow} />
   </group>;

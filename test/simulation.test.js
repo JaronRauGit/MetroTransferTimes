@@ -59,3 +59,25 @@ test('the preview traverses every physical stair and stays off the tracks across
     assert.ok(samplePath(path, path.duration).p.every((value, axis) => Math.abs(value - path.nodes.at(-1).p[axis]) < 1e-8));
   }
 });
+
+test('visual playback waits for readiness and never jumps ahead after a render stall', async () => {
+  const { createPlayback, advancePlayback } = await import('../src/simulation.js');
+  const playback = createPlayback();
+  const visualRun = { ...run, playback };
+  advancePlayback(playback, 30, false);
+  assert.equal(simulationSnapshot(visualRun, 999999).elapsed, 0);
+  advancePlayback(playback, .016);
+  advancePlayback(playback, .016);
+  assert.equal(playback.elapsed, 0);
+  advancePlayback(playback, 20);
+  assert.equal(playback.elapsed, .05);
+  advancePlayback(playback, 100, true, false);
+  assert.equal(playback.elapsed, .05);
+  while (playback.elapsed < simulationTiming.introStart) advancePlayback(playback, 1 / 60);
+  assert.equal(simulationSnapshot(visualRun).seconds, 0);
+  for (let i = 0; i < 20; i++) advancePlayback(playback, 1 / 60);
+  assert.equal(simulationSnapshot(visualRun).seconds, 0, 'the zero-time introduction must be presented before walking');
+  for (let i = 0; i < 700; i++) advancePlayback(playback, 1 / 60);
+  assert.equal(playback.elapsed, simulationTiming.duration);
+  assert.equal(simulationSnapshot(visualRun).seconds, run.result.seconds);
+});

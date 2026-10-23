@@ -46,7 +46,7 @@ export default function ValidationRoute({ layout, validation, reducedMotion }) {
   });
   if (!validation) return null;
   const finish = path.nodes.at(-1).p;
-  return <group name="validation-route" userData={{ collisionRole: 'route' }}>
+  return <group name="validation-route" userData={{ collisionRole: 'route', dynamic: true }}>
     {path.nodes.slice(0, -1).map((point, index) => <Rod key={index} from={point.p.map((v, axis) => v + (axis === 1 ? .08 : 0))} to={path.nodes[index + 1].p.map((v, axis) => v + (axis === 1 ? .08 : 0))} radius={.024} color="#dca279" />)}
     <mesh ref={halo} rotation={[-Math.PI / 2, 0, 0]}><torusGeometry args={[.38, .027, 6, 24]} /><meshBasicMaterial color="#d66555" transparent opacity={.55} /></mesh>
     <group ref={marker} name="validation-marker" position={[...path.nodes[0].p.map((v, axis) => v + (axis === 1 ? .57 : 0))]}>

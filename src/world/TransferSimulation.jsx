@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Color, Euler, Matrix4, Quaternion, Vector3 } from 'three';
 import { samplePath } from './journeyPaths.js';
@@ -10,14 +10,21 @@ import Person from './Person.jsx';
 import { PassengerClock } from './JourneyLabels.jsx';
 import { createPreviewPath } from './previewPath.js';
 
-export default function TransferSimulation({ layout: l, station, simulation, reducedMotion }) {
+export default function TransferSimulation({ layout: l, station, simulation, reducedMotion, passengerClock }) {
   const passenger = useRef(), ring = useRef(), footsteps = useRef();
   const scratch = useMemo(() => ({ matrix: new Matrix4(), position: new Vector3(), scale: new Vector3(.085, .012, .17), rotation: new Euler(), quaternion: new Quaternion(), colour: new Color(), grey: new Color('#e4ddce') }), []);
   const movement = useRef({ moving: true, time: 0 });
   const world = useWorldMotion();
   const path = useMemo(() => createPreviewPath(l), [l]);
+  useLayoutEffect(() => {
+    // Enable the instanced-colour shader during launch, rather than compiling
+    // a different footprint program just as the passenger starts walking.
+    for (let i = 0; i < 20; i++) footsteps.current.setColorAt(i, scratch.colour.set('#ed855b'));
+    footsteps.current.instanceColor.needsUpdate = true;
+  }, [scratch]);
   useFrame((_, delta) => {
     if (!passenger.current) return;
+    if (simulation?.status !== 'running') { passenger.current.visible = false; ring.current.visible = false; footsteps.current.visible = false; return; }
     const { elapsed, active, journey } = world.current.snapshot;
     const visible = active && elapsed >= simulationTiming.introStart && elapsed <= simulationTiming.walkEnd;
     const pose = samplePath(path, journey * path.duration);
@@ -42,8 +49,7 @@ export default function TransferSimulation({ layout: l, station, simulation, red
     footsteps.current.instanceColor.needsUpdate = true;
     movement.current = { moving: pose.moving && elapsed >= simulationTiming.walkStart, time: Math.max(0, elapsed - simulationTiming.walkStart) * 2.2, celebrating: pose.mode === 'walkway' };
   }, -1);
-  if (simulation?.status !== 'running') return null;
-  return <group name="transfer-simulation">
+  return <group name="transfer-simulation" visible={simulation?.status === 'running'}>
     <group position={[l.upperX, l.upperY, l.upperZ]}>
       <Train actor="source" line={station.fromLine} stripe={lineColor(station.fromLine)} visibleEndX={l.upperTrackEndX - .2} />
     </group>
@@ -51,8 +57,8 @@ export default function TransferSimulation({ layout: l, station, simulation, red
       <Train actor="destination" line={station.toLine} stripe={lineColor(station.toLine)} />
     </group>
     <group ref={passenger} name="featured-passenger" scale={1} visible={false}>
-      <PassengerClock />
-      <Person presentation={simulation.character} shirt="#ec7652" skin="#bf8863" trousers="#365b69" hair="#45382e" movement={movement} hero reducedMotion={reducedMotion} />
+      <PassengerClock target={passengerClock} />
+      <Person presentation={simulation?.character ?? 'man'} shirt="#ec7652" skin="#bf8863" trousers="#365b69" hair="#45382e" movement={movement} hero reducedMotion={reducedMotion} />
       <mesh position={[0, 1.45, 0]} rotation={[0, 0, Math.PI]}><coneGeometry args={[.105, .2, 8]} /><meshBasicMaterial color="#f58258" /></mesh>
     </group>
     <instancedMesh ref={footsteps} args={[undefined, undefined, 20]} visible={false} frustumCulled={false}><boxGeometry /><meshBasicMaterial /></instancedMesh>

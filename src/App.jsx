@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import StationWorld from './world/StationWorld.jsx';
 import CalculatorPanel from './components/CalculatorPanel.jsx';
@@ -42,17 +42,19 @@ export default function App() {
   const markReady = useCallback(() => setSceneReady(true), []);
   const launchPhase = useLaunchScreen(sceneReady || sceneFailed, reducedMotion);
   const launching = launchPhase !== 'finished';
-  const calculation = useCalculation(reducedMotion);
+  const calculation = useCalculation(reducedMotion || sceneFailed);
+  const passengerClock = useRef();
 
   function resetWork() { validation.cancel(); calculation.cancel(); }
 
   return <><main className={`experience${launchPhase === 'opening' ? ' is-opening' : ''}`} inert={launching ? true : undefined} aria-hidden={launching ? true : undefined}>
     <div className="world-canvas" aria-label="Three-dimensional Barcelona metro cutaway with street and two crossing underground platforms">
-      {!sceneFailed && <SceneBoundary onFailure={() => setSceneFailed(true)}><Canvas shadows="percentage" dpr={[1, compact ? 1.25 : 1.6]} gl={{ antialias: true, powerPreference: 'high-performance' }} orthographic camera={{ position: [23, 18.96, 22.85], zoom: 40, near: .1, far: 130 }} onCreated={({ gl }) => { gl.toneMappingExposure = 1.08; gl.localClippingEnabled = true; }} onError={() => setSceneFailed(true)}>
-        <StationWorld values={values} station={station} validation={validation.run} simulation={calculation.run} compact={compact} reducedMotion={reducedMotion} theme={appearance.theme} />
+      {!sceneFailed && <SceneBoundary onFailure={() => setSceneFailed(true)}><Canvas shadows="percentage" dpr={compact ? 1 : Math.min(window.devicePixelRatio || 1, 1.25)} gl={{ antialias: true, powerPreference: 'high-performance' }} orthographic camera={{ position: [23, 18.96, 22.85], zoom: 40, near: .1, far: 130 }} onCreated={({ gl }) => { gl.toneMappingExposure = 1.08; gl.localClippingEnabled = true; }} onError={() => setSceneFailed(true)}>
+        <StationWorld values={values} station={station} validation={validation.run} simulation={calculation.run} compact={compact} reducedMotion={reducedMotion} theme={appearance.theme} ready={sceneReady} passengerClock={passengerClock} />
         <SceneReady onReady={markReady} />
       </Canvas></SceneBoundary>}
       {sceneFailed && <p className="scene-fallback">The 3D station could not start in this browser. The calculator is still available below.</p>}
+      <div className="passenger-clock" ref={passengerClock} style={{ display: 'none', position: 'absolute', left: 0, top: 0, zIndex: 20, pointerEvents: 'none' }} aria-hidden="true"><span>TRANSFER TIME</span><strong>00:00</strong><small>.00</small></div>
       <header className="scene-header">
         <div className="wordmark"><span className="wordmark-symbol">M</span><div><strong>between<span>/</span>the lines</strong><small>BARCELONA METRO MINIATURE</small></div></div>
         <SceneLabels station={station} editable={mode === 'custom' && !calculation.running} disabled={calculation.running} onChange={next => { resetWork(); setCustomStation(next); }} />

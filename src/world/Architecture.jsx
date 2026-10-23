@@ -97,7 +97,7 @@ function MovingTreads({ x, topY, bottomY, topZ, bottomZ, count, reducedMotion })
   });
   return <>{Array.from({ length: count }, (_, i) => {
     const t = (i + .5) / count;
-    return <Block key={i} ref={node => { treads.current[i] = node; }} position={[x, topY + (bottomY - topY) * t - .035, topZ + (bottomZ - topZ) * t]} size={[1.28, .07, Math.abs(bottomZ - topZ) / count + .015]} color={i % 2 ? '#b5c8bd' : '#809f9a'} castShadow={false} />;
+    return <Block key={i} userData={{ dynamic: true }} ref={node => { treads.current[i] = node; }} position={[x, topY + (bottomY - topY) * t - .035, topZ + (bottomZ - topZ) * t]} size={[1.28, .07, Math.abs(bottomZ - topZ) / count + .015]} color={i % 2 ? '#b5c8bd' : '#809f9a'} castShadow={false} />;
   })}</>;
 }
 
@@ -141,7 +141,7 @@ export function MovingWalkway({ position = [.15, .65, -.4], length = 4.7, reduce
   return <group position={position}>
     <Block position={[0, -.09, 0]} size={[length + .38, .16, 1.25]} color={colors.tealDark} />
     <Block position={[0, .005, 0]} size={[length, .07, 1.03]} color="#698d90" roughness={.5} />
-    {Array.from({ length: 18 }, (_, i) => <Block key={i} ref={node => { slats.current[i] = node; }} position={[-length / 2 + i / 18 * length, .05, 0]} size={[.075, .015, .9]} color="#bfd2c4" castShadow={false} />)}
+    {Array.from({ length: 18 }, (_, i) => <Block key={i} userData={{ dynamic: true }} ref={node => { slats.current[i] = node; }} position={[-length / 2 + i / 18 * length, .05, 0]} size={[.075, .015, .9]} color="#bfd2c4" castShadow={false} />)}
     {[-.68, .68].map(z => <group key={z}>
       <Block position={[0, .31, z]} size={[length + .3, .44, .045]} color="#b1d0c8" transparent opacity={.42} castShadow={false} />
       <Block position={[0, .55, z]} size={[length + .35, .07, .095]} color={colors.metal} />

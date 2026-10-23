@@ -27,7 +27,7 @@ function Commuter({ path, shirt, skin = '#c99572', startsAt = 0, size = .86, lin
     group.current.scale.setScalar(Math.max(.001, fade) * size);
     movement.current = { time, moving: moving && time < path.duration };
   }, -.8);
-  return <group ref={group} position={path.nodes[0].p} scale={size} userData={{ collisionRole: 'person' }}>
+  return <group ref={group} position={path.nodes[0].p} scale={size} userData={{ collisionRole: 'person', dynamic: true }}>
     <Person shirt={shirt} skin={skin} movement={movement} variant={variant} reducedMotion={reducedMotion} />
   </group>;
 }

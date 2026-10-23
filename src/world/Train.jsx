@@ -7,6 +7,7 @@ import { useWorldNight } from './WorldAppearance.jsx';
 import { useWorldMotion } from './WorldMotion.jsx';
 import { ambientTrainOpacity, simulationTrainState } from '../simulation.js';
 import { trainCycleSeconds as cycleSeconds, trainPosition, trainExitDistance, doorOpening } from './trainSchedule.js';
+import StaticBatch from './StaticBatch.jsx';
 
 function DoorPair({ side, motion }) {
   const left = useRef();
@@ -18,7 +19,7 @@ function DoorPair({ side, motion }) {
     right.current.position.x = .22 + .34 * opening;
   });
   const z = side * .785;
-  return <group>
+  return <group userData={{ dynamic: true }}>
     <Block position={[0, .83, side * .742]} size={[.88, 1.18, .016]} color="#35585e" />
     <group ref={left} position={[-.22, 0, 0]}>
       <Block position={[0, .83, z]} size={[.44, 1.18, .055]} color={colors.coral} />
@@ -70,6 +71,7 @@ function TrainCar({ x, index, motion, line, stripe }) {
 }
 
 export default function Train({ reducedMotion, position = [0, -.36, -2.22], visibleEndX = 9.2, line = 'L3', stripe = colors.olive, phaseOffset = 6, actor = 'ambient', platformRole = 'source' }) {
+  const night = useWorldNight();
   const train = useRef();
   const world = useWorldMotion();
   const motion = useRef({ door: 0 });
@@ -86,17 +88,20 @@ export default function Train({ reducedMotion, position = [0, -.36, -2.22], visi
       if (!object.isMesh) return;
       const meshMaterials = Array.isArray(object.material) ? object.material : [object.material];
       meshMaterials.forEach(material => {
-        materials.current.push({ material, opacity: material.opacity });
+        material.userData.trainBaseOpacity ??= material.opacity;
+        materials.current.push({ material, opacity: material.userData.trainBaseOpacity });
+        const changed = !material.transparent || material.clippingPlanes !== planes;
         material.transparent = true;
         material.clippingPlanes = planes;
         material.clipShadows = true;
-        material.needsUpdate = true;
+        if (changed) material.needsUpdate = true;
       });
     });
-  }, [planes]);
+  }, [planes, night, line, stripe]);
   useFrame(({ clock }) => {
     if (!train.current) return;
     const snapshot = world.current.snapshot;
+    if (actor !== 'ambient' && !snapshot.active) { train.current.visible = false; return; }
     phaseState.current.phase += world.current.time - phaseState.current.time;
     phaseState.current.time = world.current.time;
     const featured = actor !== 'ambient';
@@ -118,7 +123,9 @@ export default function Train({ reducedMotion, position = [0, -.36, -2.22], visi
     planes[0].setFromNormalAndCoplanarPoint(axis, edge.copy(origin).addScaledVector(axis, -9.2));
     planes[1].setFromNormalAndCoplanarPoint(oppositeAxis.copy(axis).negate(), edge.copy(origin).addScaledVector(axis, visibleEndX));
   }, -1);
-  return <group ref={train} position={position} name={actor === 'ambient' ? `ambient-${platformRole}-train` : `featured-${actor}-train`} userData={{ collisionRole: 'train' }}>
-    {[-4.83, -1.61, 1.61, 4.83].map((x, index) => <TrainCar key={x} x={x} index={index} motion={motion} line={line} stripe={stripe} />)}
+  return <group ref={train} position={position} name={actor === 'ambient' ? `ambient-${platformRole}-train` : `featured-${actor}-train`} userData={{ collisionRole: 'train', dynamic: true }}>
+    <StaticBatch revision={`${night}-${line}-${stripe}`} allowTransparent>
+      {[-4.83, -1.61, 1.61, 4.83].map((x, index) => <TrainCar key={x} x={x} index={index} motion={motion} line={line} stripe={stripe} />)}
+    </StaticBatch>
   </group>;
 }
