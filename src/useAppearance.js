@@ -16,5 +16,5 @@ export default function useAppearance() {
     document.documentElement.dataset.theme = theme;
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', worldPalettes[theme].background);
   }, [theme]);
-  return { theme, automatic: override === null, toggle: () => setOverride(theme === 'dark' ? 'light' : 'dark'), useAutomatic: () => { setLocalTheme(themeAtTime()); setOverride(null); } };
+  return { theme, automatic: override === null, select: setOverride, useAutomatic: () => { setLocalTheme(themeAtTime()); setOverride(null); } };
 }

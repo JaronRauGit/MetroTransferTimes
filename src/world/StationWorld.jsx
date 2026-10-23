@@ -1,7 +1,8 @@
 import { memo, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { ContactShadows, OrbitControls } from '@react-three/drei';
-import { EffectComposer, N8AO } from '@react-three/postprocessing';
+import { Bloom, EffectComposer, FXAA, N8AO, ToneMapping } from '@react-three/postprocessing';
+import { ToneMappingMode } from 'postprocessing';
 import * as THREE from 'three';
 import { Block, FloorSlab, Sign, colors } from './Primitives.jsx';
 import { Staircase, Escalator, MovingWalkway, Bench } from './Architecture.jsx';
@@ -15,7 +16,9 @@ import CreatorsNook from './CreatorsNook.jsx';
 import { WorldMotion } from './WorldMotion.jsx';
 import MonochromeWorld from './MonochromeWorld.jsx';
 import { worldPalettes } from '../appearance.js';
-import { StationNightLights, WorldNightContext } from './WorldAppearance.jsx';
+import { WorldCompactContext, WorldNightContext, useWorldNight } from './WorldAppearance.jsx';
+import WorldLighting from './WorldLighting.jsx';
+import { lightingProfiles, lightingQuality, surfaceResponse } from './lighting.js';
 import TransferSimulation from './TransferSimulation.jsx';
 import { creatorsNookBounds } from './creatorsLayout.js';
 import { getStationLayout, getStationShape, stationDimensions as d } from './stationLayout.js';
@@ -110,7 +113,7 @@ function Tracks({ endX }) {
   return <group userData={{ collisionRole: 'track' }}>
     <FloorSlab position={[mid, -.56, d.trackZ]} size={[length, 2.4, .3]} color="#65706c" sideColor="#77786d" />
     {Array.from({ length: sleepers }, (_, i) => <Block key={i} position={[startX + (i + .5) * length / sleepers, -.51, d.trackZ]} size={[.13, .09, 1.7]} color="#505b58" />)}
-    {[-.52, .52].map(offset => <Block key={offset} position={[mid, -.43, d.trackZ + offset]} size={[length, .1, .11]} color="#bac4bc" />)}
+    {[-.52, .52].map(offset => <Block key={offset} position={[mid, -.43, d.trackZ + offset]} size={[length, .1, .11]} color="#bac4bc" {...surfaceResponse.rail} />)}
   </group>;
 }
 
@@ -161,6 +164,7 @@ function wallIntervals(layout) {
 }
 
 const TransferTunnel = memo(function TransferTunnel({ layout: l, fromLine, toLine, reducedMotion }) {
+  const night = useWorldNight();
   const mid = (l.tunnelStartX + l.tunnelEndX) / 2;
   const walls = wallIntervals(l);
   const signWall = walls.reduce((longest, wall) => wall[1] - wall[0] > longest[1] - longest[0] ? wall : longest, [0, 0]);
@@ -178,7 +182,7 @@ const TransferTunnel = memo(function TransferTunnel({ layout: l, fromLine, toLin
       return <group key={i}>
         <Block position={[x, l.tunnelY + 2.05, l.tunnelZ]} size={[.14, .14, 2.76]} color="#d8c3a0" />
         <Block position={[x, l.tunnelY + 1.03, l.tunnelFarZ + .06]} size={[.14, 2.06, .14]} color="#d8c3a0" />
-        <Block position={[x, l.tunnelY + 1.94, l.tunnelZ]} size={[.22, .07, .47]} color="#fff0cb" castShadow={false} />
+        <Block position={[x, l.tunnelY + 1.94, l.tunnelZ]} size={[.22, .07, .47]} color="#fff0cb" emissive="#ffdb9d" emissiveIntensity={night ? 1.5 : .1} castShadow={false} />
       </group>;
     })}
     {signWall[1] - signWall[0] > 1 && <Sign position={[(signWall[0] + signWall[1]) / 2, l.tunnelY + 1.29, l.tunnelNearZ + .035]} size={[Math.min(2.5, signWall[1] - signWall[0] - .16), .43]} text={`${fromLine}  →  ${toLine}`} background={colors.tealDark} foreground={colors.warmWhite} frame={colors.tealDark} />}
@@ -227,16 +231,14 @@ function StationWorld({ values, station, validation, simulation, reducedMotion, 
   const mobile = compact || size.width < 700;
   const night = theme === 'dark';
   const palette = worldPalettes[theme];
-  return <WorldNightContext.Provider value={night}><WorldMotion simulation={simulation} reducedMotion={reducedMotion}>
+  const profile = lightingProfiles[theme], quality = lightingQuality(mobile);
+  return <WorldNightContext.Provider value={night}><WorldCompactContext.Provider value={mobile}><WorldMotion simulation={simulation} reducedMotion={reducedMotion}>
     <color attach="background" args={[palette.background]} />
     <fog attach="fog" args={[palette.background, 75, 130]} />
-    <ambientLight intensity={night ? .48 : .68} />
-    <hemisphereLight args={[palette.sky, palette.bounce, night ? 1.35 : 2]} />
-    <directionalLight position={[-10, 22, 13]} intensity={night ? 1.1 : 2.5} color={palette.sunlight} castShadow shadow-mapSize={mobile ? [1024, 1024] : [2048, 2048]} shadow-camera-left={-32} shadow-camera-right={32} shadow-camera-top={32} shadow-camera-bottom={-32} shadow-camera-near={1} shadow-camera-far={78} shadow-normalBias={.035} shadow-radius={3} />
-    {night && <StationNightLights layout={layout} />}
+    <WorldLighting layout={layout} theme={theme} compact={mobile} />
     <MonochromeWorld theme={theme}>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layout.groundY - .85, 0]} receiveShadow><planeGeometry args={[200, 200]} /><meshStandardMaterial color={palette.ground} roughness={1} /></mesh>
-    <ContactShadows key={transitioning ? 'resizing' : layout.groundY} position={[0, layout.groundY - .83, 0]} opacity={.2} scale={58} blur={2.9} far={10} resolution={mobile ? 256 : 512} frames={transitioning ? Infinity : 1} color="#51675f" />
+    <ContactShadows key={transitioning ? 'resizing' : `${layout.groundY}-${theme}`} position={[0, layout.groundY - .83, 0]} opacity={night ? .26 : .28} scale={64} blur={2.4} far={10} resolution={quality.contactResolution} frames={transitioning ? Infinity : 1} color={night ? '#111c2d' : '#586b78'} />
     <group>
       <CutawayEarth layout={layout} />
       <CreatorsNook layout={layout} />
@@ -250,8 +252,13 @@ function StationWorld({ values, station, validation, simulation, reducedMotion, 
     </MonochromeWorld>
     <TransferSimulation layout={layout} station={station} simulation={simulation} reducedMotion={reducedMotion} />
     <SceneCamera layout={targetLayout} reducedMotion={reducedMotion} simulation={simulation} editingLabels={!station.presetId && simulation?.status !== 'running'} />
-    <EffectComposer multisampling={0}><N8AO halfRes quality={mobile ? 'performance' : 'low'} aoRadius={.66} intensity={1.35} distanceFalloff={.8} /></EffectComposer>
-  </WorldMotion></WorldNightContext.Provider>;
+    <EffectComposer multisampling={0}>
+      <N8AO halfRes={quality.aoHalfResolution} quality={quality.aoQuality} aoRadius={quality.aoRadius} intensity={quality.aoIntensity} distanceFalloff={.8} />
+      <Bloom mipmapBlur intensity={profile.bloom} luminanceThreshold={1.15} luminanceSmoothing={.35} resolutionScale={.5} height={quality.bloomResolution} />
+      <ToneMapping mode={ToneMappingMode.NEUTRAL} />
+      <FXAA />
+    </EffectComposer>
+  </WorldMotion></WorldCompactContext.Provider></WorldNightContext.Provider>;
 }
 
 export default memo(StationWorld);

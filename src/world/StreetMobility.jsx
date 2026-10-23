@@ -2,6 +2,9 @@ import { useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
 import { Block, Rod } from './Primitives.jsx';
+import { useWorldCompact, useWorldNight } from './WorldAppearance.jsx';
+import LocalLight from './LocalLight.jsx';
+import { lightingQuality, surfaceResponse } from './lighting.js';
 import Person from './Person.jsx';
 import { useWorldMotion } from './WorldMotion.jsx';
 import { getStreetVehiclePath, getStreetWalkingPath, sampleStreetTrip } from './streetPaths.js';
@@ -27,6 +30,7 @@ function StreetTrip({ path, offset = 0, rest = 3, reducedMotion, bicycle = false
     for (const [material, base] of materials.current) material.opacity = base * opacity;
     root.current.userData.tripTime = sample.time;
     root.current.userData.moving = sample.moving && sample.visible;
+    root.current.userData.lightOpacity = opacity;
   }, -.9);
   return <group ref={root} name={bicycle ? 'street-cyclist' : car ? 'street-car' : 'street-pedestrian'}>{children}</group>;
 }
@@ -53,6 +57,7 @@ function BicycleWheel({ x, spin }) {
 }
 
 function Bicycle({ colour, variant = 0, reducedMotion }) {
+  const night = useWorldNight(), compact = useWorldCompact();
   const wheels = useRef([]), legs = useRef([]);
   const motion = useWorldMotion();
   useFrame(() => {
@@ -70,6 +75,9 @@ function Bicycle({ colour, variant = 0, reducedMotion }) {
     <Rod from={[.43, .23, 0]} to={[.3, .76, 0]} radius={.023} color="#647f76" />
     <Rod from={[.3, .76, -.18]} to={[.3, .76, .18]} radius={.023} color="#526e64" />
     <Block position={[-.15, .65, 0]} size={[.22, .055, .14]} color="#5a6c60" />
+    <Block position={[.35, .72, 0]} size={[.065, .055, .075]} color="#f3e6cc" emissive="#fff0c4" emissiveIntensity={night ? 2.3 : .05} castShadow={false} />
+    <Block position={[-.44, .57, 0]} size={[.035, .045, .055]} color="#c07562" emissive="#f55c38" emissiveIntensity={night ? 1.2 : 0} castShadow={false} />
+    {lightingQuality(compact).bicycleSpills && <LocalLight name="bicycle-headlight" position={[.39, .72, 0]} target={[1.15, -.72, 0]} reach={1.9} power={1.6} angle={.43} color="#ffe9bc" />}
     <group position={[-.11, .85, 0]} rotation={[0, 0, -.36]}><mesh castShadow><cylinderGeometry args={[.12, .14, .34, 6]} /><meshStandardMaterial color={variant ? '#d0ad6f' : '#6b9991'} roughness={1} flatShading /></mesh></group>
     <mesh position={[.08, 1.12, 0]} castShadow><sphereGeometry args={[.13, 9, 6]} /><meshStandardMaterial color={variant ? '#8d5f45' : '#c99974'} roughness={1} flatShading /></mesh>
     <mesh position={[.07, 1.2, 0]} scale={[1.1, .65, 1.1]} castShadow><sphereGeometry args={[.137, 8, 6]} /><meshStandardMaterial color={variant ? '#6e9697' : '#e3d1a5'} roughness={1} flatShading /></mesh>
@@ -87,16 +95,18 @@ function Bicycle({ colour, variant = 0, reducedMotion }) {
 }
 
 function MicroCar() {
+  const night = useWorldNight();
   return <group>
     <RoundedBox args={[1.2, .24, .55]} radius={.06} smoothness={2} position={[0, .24, 0]} castShadow><meshStandardMaterial color="#aebdb1" roughness={.75} /></RoundedBox>
     <RoundedBox args={[.64, .31, .47]} radius={.06} smoothness={2} position={[-.07, .48, 0]} castShadow><meshStandardMaterial color="#c9d0bc" roughness={.8} /></RoundedBox>
     {[-1, 1].map(side => <group key={side}>
-      <Block position={[-.07, .49, side * .239]} size={[.44, .17, .014]} color="#6d908e" roughness={.3} />
+      <Block position={[-.07, .49, side * .239]} size={[.44, .17, .014]} color="#6d908e" {...surfaceResponse.glass} />
       {[-.37, .38].map(x => <mesh key={x} position={[x, .14, side * .275]} rotation={[Math.PI / 2, 0, 0]} castShadow><cylinderGeometry args={[.112, .112, .065, 10]} /><meshStandardMaterial color="#5f6961" roughness={1} /></mesh>)}
-      <Block position={[.6, .29, side * .18]} size={[.02, .075, .13]} color="#f6e3a6" />
-      <Block position={[-.6, .29, side * .18]} size={[.02, .07, .1]} color="#b77c67" />
+      <Block position={[.6, .29, side * .18]} size={[.02, .075, .13]} color="#f6e3a6" emissive="#ffe2a1" emissiveIntensity={night ? 2.4 : .04} />
+      <Block position={[-.6, .29, side * .18]} size={[.02, .07, .1]} color="#b77c67" emissive="#e85231" emissiveIntensity={night ? 1.1 : 0} />
     </group>)}
-    <Block position={[.26, .48, 0]} size={[.015, .17, .35]} color="#6d908e" roughness={.3} />
+    <Block position={[.26, .48, 0]} size={[.015, .17, .35]} color="#6d908e" {...surfaceResponse.glass} />
+    <LocalLight name="car-headlights" position={[.64, .29, 0]} target={[1.6, -.29, 0]} reach={2.6} power={2.8} angle={.48} color="#ffe5b3" />
   </group>;
 }
 

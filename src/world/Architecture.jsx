@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Shape } from 'three';
 import { useWorldMotion } from './WorldMotion.jsx';
 import { Block, Rod, Sign, WindowPane, colors } from './Primitives.jsx';
+import FoliageMaterial from './FoliageMaterial.jsx';
 
 export function Building({ position, width, depth, height, color = colors.cream, roof = colors.terracotta, flat = false }) {
   const [x, ground, z] = position;
@@ -35,8 +36,8 @@ export function LowPolyTree({ position, hue = colors.olive, scale = 1 }) {
   const [x, y, z] = position;
   return <group position={[x, y, z]} scale={scale}>
     <mesh position={[0, .53, 0]} castShadow><cylinderGeometry args={[.09, .15, 1.05, 6]} /><meshStandardMaterial color="#7e654c" roughness={1} /></mesh>
-    <mesh position={[0, 1.38, 0]} castShadow><dodecahedronGeometry args={[.65, 0]} /><meshStandardMaterial color={hue} flatShading roughness={1} /></mesh>
-    <mesh position={[.3, 1.1, -.2]} castShadow><dodecahedronGeometry args={[.46, 0]} /><meshStandardMaterial color={colors.mint} flatShading roughness={1} /></mesh>
+    <mesh position={[0, 1.38, 0]} castShadow receiveShadow><dodecahedronGeometry args={[.65, 0]} /><FoliageMaterial color={hue} /></mesh>
+    <mesh position={[.3, 1.1, -.2]} castShadow receiveShadow><dodecahedronGeometry args={[.46, 0]} /><FoliageMaterial color={colors.mint} /></mesh>
   </group>;
 }
 
@@ -45,8 +46,8 @@ export function Palm({ position, scale = 1 }) {
     <mesh position={[0, 1.05, 0]} rotation={[0, 0, -.1]} castShadow><cylinderGeometry args={[.075, .13, 2.1, 7]} /><meshStandardMaterial color="#9a7357" roughness={1} /></mesh>
     {[0, 1, 2, 3, 4, 5].map(index => {
       const angle = index * Math.PI / 3;
-      return <mesh key={index} position={[Math.cos(angle) * .55, 2.05, Math.sin(angle) * .55]} rotation={[Math.sin(angle) * .68, 0, -Math.cos(angle) * .68]} castShadow>
-        <coneGeometry args={[.34, 1.35, 4]} /><meshStandardMaterial color={index % 2 ? '#6e966c' : '#4e8267'} flatShading side={2} roughness={1} />
+      return <mesh key={index} position={[Math.cos(angle) * .55, 2.05, Math.sin(angle) * .55]} rotation={[Math.sin(angle) * .68, 0, -Math.cos(angle) * .68]} castShadow receiveShadow>
+        <coneGeometry args={[.34, 1.35, 4]} /><FoliageMaterial color={index % 2 ? '#6e966c' : '#4e8267'} side={2} />
       </mesh>;
     })}
   </group>;

@@ -2,7 +2,8 @@ import { useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
-import { Block, Sign, colors } from './Primitives.jsx';
+import { Block, Sign, WindowPane, colors } from './Primitives.jsx';
+import { useWorldNight } from './WorldAppearance.jsx';
 import { useWorldMotion } from './WorldMotion.jsx';
 import { ambientTrainOpacity, simulationTrainState } from '../simulation.js';
 import { trainCycleSeconds as cycleSeconds, trainPosition, trainExitDistance, doorOpening } from './trainSchedule.js';
@@ -21,17 +22,18 @@ function DoorPair({ side, motion }) {
     <Block position={[0, .83, side * .742]} size={[.88, 1.18, .016]} color="#35585e" />
     <group ref={left} position={[-.22, 0, 0]}>
       <Block position={[0, .83, z]} size={[.44, 1.18, .055]} color={colors.coral} />
-      <Block position={[0, 1.03, z + side * .035]} size={[.27, .53, .018]} color={colors.glass} roughness={.27} metalness={.13} />
+      <WindowPane position={[0, 1.03, z + side * .035]} size={[.27, .53, .018]} color={colors.glass} />
     </group>
     <group ref={right} position={[.22, 0, 0]}>
       <Block position={[0, .83, z]} size={[.44, 1.18, .055]} color={colors.coral} />
-      <Block position={[0, 1.03, z + side * .035]} size={[.27, .53, .018]} color={colors.glass} roughness={.27} metalness={.13} />
+      <WindowPane position={[0, 1.03, z + side * .035]} size={[.27, .53, .018]} color={colors.glass} />
     </group>
   </group>;
 }
 
 function TrainCar({ x, index, motion, line, stripe }) {
   const frontCar = index === 3;
+  const night = useWorldNight();
   return <group position={[x, 0, 0]}>
     <Block position={[0, .34, 0]} size={[3.1, .28, 1.36]} color="#4e5b5d" />
     <RoundedBox args={[3.13, 1.4, 1.44]} radius={.16} smoothness={3} position={[0, .95, 0]} castShadow receiveShadow>
@@ -47,8 +49,8 @@ function TrainCar({ x, index, motion, line, stripe }) {
     {[-1, 1].map(side => <group key={side}>
       {[-1.13, .98].map(pos => <group key={pos}>
         <Block position={[pos, 1.12, side * .754]} size={[.56, .55, .038]} color={colors.tealDark} />
-        <Block position={[pos, 1.12, side * .781]} size={[.47, .46, .014]} color="#6aaeb5" roughness={.19} metalness={.21} />
-        <Block position={[pos - .12, 1.27, side * .791]} size={[.18, .035, .014]} color="#a7cdd0" castShadow={false} />
+        <WindowPane position={[pos, 1.12, side * .781]} size={[.47, .46, .014]} color="#6aaeb5" />
+        <Block position={[pos - .12, 1.27, side * .791]} size={[.18, .035, .014]} color={night ? '#ecd5a9' : '#91babc'} castShadow={false} />
       </group>)}
       <DoorPair side={side} motion={motion} />
     </group>)}
@@ -59,9 +61,9 @@ function TrainCar({ x, index, motion, line, stripe }) {
     <Block position={[.61, 1.85, 0]} size={[.42, .07, .48]} color="#8fa29d" />
     {frontCar && <>
       <Block position={[1.61, 1.05, 0]} size={[.065, .62, .96]} color={colors.tealDark} />
-      <Block position={[1.655, 1.05, 0]} size={[.018, .54, .87]} color="#6aaeb5" roughness={.22} metalness={.2} />
-      <Block position={[1.68, .54, -.46]} size={[.035, .14, .19]} color="#ffe9b0" roughness={.3} />
-      <Block position={[1.68, .54, .46]} size={[.035, .14, .19]} color="#ffe9b0" roughness={.3} />
+      <WindowPane lit={false} position={[1.655, 1.05, 0]} size={[.018, .54, .87]} color="#6aaeb5" />
+      <Block position={[1.68, .54, -.46]} size={[.035, .14, .19]} color="#ffe9b0" emissive="#ffdb9e" emissiveIntensity={night ? 2 : .05} roughness={.4} />
+      <Block position={[1.68, .54, .46]} size={[.035, .14, .19]} color="#ffe9b0" emissive="#ffdb9e" emissiveIntensity={night ? 2 : .05} roughness={.4} />
       <Sign position={[1.7, 1.5, 0]} rotation={[0, Math.PI / 2, 0]} size={[.53, .19]} text={line} background={stripe} foreground={colors.warmWhite} frame={stripe} />
     </>}
   </group>;
@@ -104,6 +106,8 @@ export default function Train({ reducedMotion, position = [0, -.36, -2.22], visi
     phaseState.current.opacity = opacity;
     const phase = phaseState.current.phase % cycleSeconds;
     train.current.visible = featured ? snapshot.active && state.visible : opacity > .001;
+    train.current.userData.lightOpacity = opacity;
+    train.current.userData.lightBounds = [-9.2, visibleEndX];
     train.current.position.x = position[0] + (featured ? state.x : reducedMotion ? 0 : trainPosition(phase, trainExitDistance(visibleEndX)));
     motion.current.door = featured ? state.door : reducedMotion ? 0 : doorOpening(phase);
     materials.current.forEach(({ material, opacity: base }) => { material.opacity = base * opacity; });

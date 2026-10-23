@@ -2,6 +2,9 @@ import { Block, FloorSlab, Rod, Sign, WindowPane, colors } from './Primitives.js
 import { Building, LowPolyTree, Palm, StaircaseAlongX } from './Architecture.jsx';
 import StreetMobility from './StreetMobility.jsx';
 import { Turnstiles } from './Details.jsx';
+import { useWorldNight } from './WorldAppearance.jsx';
+import LocalLight, { LightHaze } from './LocalLight.jsx';
+import { surfaceResponse } from './lighting.js';
 
 function CasaFacade({ x }) {
   const y = 3.56;
@@ -49,14 +52,17 @@ function BarcelonaBench({ position }) {
   </group>;
 }
 
-function BarcelonaLamp({ position }) {
+function BarcelonaLamp({ position, shadow = false }) {
+  const night = useWorldNight();
   return <group position={position}>
     <mesh position={[0, 1.6, 0]} castShadow><cylinderGeometry args={[.055, .09, 3.2, 8]} /><meshStandardMaterial color="#405f60" roughness={.82} /></mesh>
     <Block position={[0, 3.19, 0]} size={[.37, .11, .37]} color="#405f60" />
     {[-1, 1].map(side => <group key={side}>
       <Rod from={[0, 2.82, 0]} to={[side * .42, 3.12, 0]} radius={.035} color="#405f60" />
-      <mesh position={[side * .47, 3.14, 0]}><sphereGeometry args={[.17, 10, 8]} /><meshStandardMaterial color="#fff0c8" emissive="#e4c88b" emissiveIntensity={.7} roughness={.75} /></mesh>
+      <mesh position={[side * .47, 3.14, 0]}><sphereGeometry args={[.17, 10, 8]} /><meshStandardMaterial color="#fff0c8" emissive="#ffce8a" emissiveIntensity={night ? 2.4 : .05} roughness={.75} /></mesh>
+      <LightHaze position={[side * .47, 3.14, 0]} radius={.34} />
     </group>)}
+    <LocalLight name="barcelona-street-lamp" position={[0, 3.13, 0]} target={[0, -3.13, -.65]} power={32} reach={4.7} angle={.76} shadow={shadow} />
   </group>;
 }
 
@@ -89,7 +95,7 @@ export default function BarcelonaStreet({ layout, stationName, reducedMotion }) 
   return <group>
     <group position={[0, layout.streetY - 3.56, 0]}>
     <FloorSlab position={[center, 3.56, -4.65]} size={[width, 4.18, .44]} color="#e9d7b5" />
-    <FloorSlab position={[center, 3.56, -2.37]} size={[width, .75, .44]} color="#aeb5a6" sideColor="#9f9e8c" />
+    <FloorSlab name="dry-asphalt" position={[center, 3.56, -2.37]} size={[width, .75, .44]} color="#aeb5a6" sideColor="#9f9e8c" {...surfaceResponse.asphalt} />
     <FloorSlab position={[layout.streetMinX + leftWidth / 2, 3.56, -.3325]} size={[leftWidth, 3.465, .44]} color="#eee0c4" />
     <FloorSlab position={[rightStart + rightWidth / 2, 3.56, -.3325]} size={[rightWidth, 3.465, .44]} color="#eee0c4" />
     <FloorSlab position={[x, 3.56, -1.4075]} size={[rightStart - layout.entranceTopX + .18, 1.315, .44]} color="#eee0c4" />
@@ -113,7 +119,7 @@ export default function BarcelonaStreet({ layout, stationName, reducedMotion }) 
       return Math.abs(tileX - x) < 2.6 ? null : <FlowerTile key={i} x={tileX} z={.65} />;
     })}
     <BarcelonaBench position={[layout.upperX + 4.72, 3.58, -1.33]} />
-    <BarcelonaLamp position={[layout.upperX + 5.95, 3.58, -1.16]} />
+    <BarcelonaLamp position={[layout.upperX + 5.95, 3.58, -1.16]} shadow />
     <BarcelonaLamp position={[layout.lowerX + 4.6, 3.58, -1.16]} />
     <StreetMobility layout={layout} reducedMotion={reducedMotion} />
     </group>

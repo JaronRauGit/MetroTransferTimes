@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { useWorldNight } from './WorldAppearance.jsx';
+import { surfaceResponse } from './lighting.js';
 
 export const colors = {
   sand: '#dec4a2',
@@ -23,16 +24,16 @@ export const colors = {
   warmWhite: '#fff5dc',
 };
 
-export const Block = forwardRef(function Block({ position, size, color = colors.limestone, rotation, roughness = 0.93, metalness = 0, emissive = '#000000', emissiveIntensity = 0, castShadow = true, receiveShadow = true, transparent = false, opacity = 1, ...props }, ref) {
+export const Block = forwardRef(function Block({ position, size, color = colors.limestone, rotation, roughness = surfaceResponse.stone.roughness, metalness = surfaceResponse.stone.metalness, envMapIntensity = 1, emissive = '#000000', emissiveIntensity = 0, castShadow = true, receiveShadow = true, transparent = false, opacity = 1, ...props }, ref) {
   return <mesh ref={ref} position={position} rotation={rotation} castShadow={castShadow} receiveShadow={receiveShadow} {...props}>
     <boxGeometry args={size} />
-    <meshStandardMaterial color={color} roughness={roughness} metalness={metalness} emissive={emissive} emissiveIntensity={emissiveIntensity} transparent={transparent} opacity={opacity} />
+    <meshStandardMaterial color={color} roughness={roughness} metalness={metalness} envMapIntensity={envMapIntensity} emissive={emissive} emissiveIntensity={emissiveIntensity} transparent={transparent} opacity={opacity} />
   </mesh>;
 });
 
 export function WindowPane({ color = colors.glass, lit = true, ...props }) {
   const night = useWorldNight() && lit;
-  return <Block {...props} color={night ? '#e6bd86' : color} emissive={night ? '#ffb95c' : '#000000'} emissiveIntensity={night ? .65 : 0} />;
+  return <Block {...props} {...surfaceResponse.glass} color={night ? '#e6bd86' : color} emissive={night ? '#ffca81' : '#000000'} emissiveIntensity={night ? 1.4 : 0} />;
 }
 
 export function Rod({ from, to, radius = 0.035, color = colors.metal, segments = 6 }) {
@@ -82,10 +83,10 @@ export function Sign({ position, size = [1.5, .45], text, subtext, background = 
   </group>;
 }
 
-export function FloorSlab({ position, size, color = colors.sand, sideColor = colors.stoneSide }) {
+export function FloorSlab({ position, size, color = colors.sand, sideColor = colors.stoneSide, ...response }) {
   const [width, depth, thickness] = size;
   return <group position={position}>
     <Block position={[0, -(thickness + .055) / 2, 0]} size={[width, thickness - .055, depth]} color={sideColor} />
-    <Block position={[0, -.0275, 0]} size={[width, .055, depth]} color={color} castShadow={false} />
+    <Block position={[0, -.0275, 0]} size={[width, .055, depth]} color={color} castShadow={false} {...response} />
   </group>;
 }

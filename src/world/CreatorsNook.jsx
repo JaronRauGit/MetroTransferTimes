@@ -4,6 +4,7 @@ import { Block, FloorSlab, Rod, Sign, colors } from './Primitives.jsx';
 import CreatorsPlane from './CreatorsPlane.jsx';
 import SunsetBackdrop from './SunsetBackdrop.jsx';
 import { creatorsDimensions as terrace, getCreatorsLayout } from './creatorsLayout.js';
+import { useWorldNight } from './WorldAppearance.jsx';
 
 const skin = '#d4aa83';
 
@@ -194,6 +195,7 @@ function TerracePlanter({ x }) {
 }
 
 function CreatorsTerrace() {
+  const night = useWorldNight();
   return <group>
     <FloorSlab position={[0, 0, 0]} size={[terrace.width, terrace.depth, .38]} color="#e3deca" sideColor="#b3ab92" />
     <Block position={[0, -.16, 4.13]} size={[14.8, .33, .13]} color="#c6b898" />
@@ -213,9 +215,9 @@ function CreatorsTerrace() {
     <Sign position={[4.8, 6.95, -3.7]} size={[3.6, .75]} text="MADE BY FRIENDS" subtext="BARCELONA  ·  EL PRAT" background={colors.cream} foreground={colors.tealDark} frame="#ae9571" />
     {[-6.55, 6.55].map(x => <group key={x} position={[x, 5.3, -3.62]}>
       <Block size={[.22, .58, .18]} color={colors.tealDark} />
-      <Block position={[0, 0, .11]} size={[.15, .38, .09]} color="#f3d9a4" />
+      <Block position={[0, 0, .11]} size={[.15, .38, .09]} color="#f3d9a4" emissive="#ffcc8e" emissiveIntensity={night ? 1.8 : 0} />
     </group>)}
-    <pointLight position={[0, 5.7, 2.9]} color="#ffedce" intensity={12} distance={15} decay={2} />
+    <rectAreaLight name="creators-softbox" position={[0, 4.6, 3.4]} rotation={[-.55, 0, 0]} width={7} height={3} color="#ffdeb2" intensity={night ? 2.2 : .65} />
   </group>;
 }
 

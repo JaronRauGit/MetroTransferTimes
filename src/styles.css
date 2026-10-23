@@ -301,8 +301,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
 :root { --world-bg: #dce9e3; --launch-fade: #dce9e300; --hud-bg: #f7f8eee6; }
 body, .world-canvas { background: var(--world-bg); }
 .theme-control { position: absolute; z-index: 35; bottom: 14px; left: max(12px, env(safe-area-inset-left)); display: flex; padding: 3px; border: 1px solid #fff7; border-radius: 12px; background: var(--hud-bg); box-shadow: 0 5px 18px #26453b14; backdrop-filter: blur(12px); }
-.theme-control button { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 5px; border: 0; border-radius: 8px; background: transparent; color: #59766a; }
+.theme-control button { display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 44px; min-height: 44px; padding: 5px 7px; border: 0; border-radius: 8px; background: transparent; color: #59766a; font-size: 10px; font-weight: 650; }
 .theme-control button:hover { background: #97b39924; }
+.theme-control button[aria-pressed="true"] { background: #b0c6a431; }
+.theme-control svg { flex: none; }
+.scene-instruction { max-width: calc(100% - 224px); line-height: 1.6; }
 .theme-auto { font-size: 10px; font-weight: 700; }
 .theme-auto[aria-pressed="true"] { color: #3c735c; background: #b0c6a431; }
 /* Keep the final canvas size during launch; only fade the surrounding UI. */
